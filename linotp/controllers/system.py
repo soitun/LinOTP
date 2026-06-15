@@ -1833,8 +1833,8 @@ class SystemController(BaseController):
             "",
             "<p class='center'>",
             _("Sales hotline: "),
-            "<a href='tel:+49615186086277'>",
-            _("+49 6151 86086 277"),
+            "<a href='tel:+49302647457277'>",
+            _("+49 30 264745 - 7277"),
             "</a></p>",
         ]
 

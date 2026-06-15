@@ -89,8 +89,8 @@ msgstr "'OATH-Token' App"
 msgid "(again)"
 msgstr "(wiederholen)"
 
-msgid "+49 6151 86086 277"
-msgstr "+49 6151 86086 277"
+msgid "+49 30 264745 - 7277"
+msgstr "+49 30 264745 - 7277"
 
 msgid "- Select Temporary Token Type -"
 msgstr "- Temporären Tokentyp wählen -"

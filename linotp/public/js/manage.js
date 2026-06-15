@@ -2393,7 +2393,7 @@ function support_view() {
                 info += "<div class='subscription_info'><br>" +
                     i18n.gettext("For support and subscription please contact us at") +
                     " <a href='https://www.linotp.de/' rel='noreferrer' target='_blank'>linotp.de</a> <br>" +
-                    i18n.gettext("by phone") + " <a href='tel:0049615186086115'>+49 6151 86086-115</a> " + i18n.gettext("or email") + " <a href='mailto:support@linotp.de'>support@linotp.de</a></div>";
+                    i18n.gettext("by phone") + " <a href='tel:+49302647457115'>+49 30 264745 - 7115</a> " + i18n.gettext("or email") + " <a href='mailto:support@linotp.de'>support@linotp.de</a></div>";
                 $("#dialog_support_view").html($.parseHTML(info));
             }
         });
