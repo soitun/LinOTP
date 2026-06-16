@@ -157,6 +157,7 @@ from linotp.lib.policy import get_client_policy, get_tokenlabel
 from linotp.lib.policy.action import get_action_value
 from linotp.lib.policy.processing import has_client_policy
 from linotp.lib.policy.util import _get_client
+from linotp.lib.token import get_token_owner
 from linotp.lib.user import User
 from linotp.tokens import tokenclass_registry
 from linotp.tokens.base import TokenClass
@@ -298,7 +299,7 @@ def compute_authenticator_types_options(
 
 
 def _get_fido2_policy_value(
-    action: str, user, token_realms=None, scope="enrollment"
+    action: str, owner, token_realms, scope="enrollment"
 ) -> Any:
     """Get a single enrollment policy value for the given user.
 
@@ -309,26 +310,11 @@ def _get_fido2_policy_value(
     :return: policy value, or ``None`` when the user info is
         missing or no policy matches
     """
-    if token_realms:
-        realm = user.realm if user and user.realm in token_realms else (token_realms[0])
-    else:
-        realm = user.realm if user and user.realm else ""
-    policies = get_client_policy(
-        context["Client"],
-        scope=scope,
-        user=user.login if user else "",
-        realm=realm or "",
-        action=action,
-    )
-    if not policies:
-        return None
+    realms = [owner.realm] if owner and owner.login and owner.realm else token_realms
 
-    value = get_action_value(
-        policies,
-        scope=scope,
-        action=action,
+    value = _get_single_policy(
+        policy_name=action, policy_scope=scope, user=owner, realms=realms
     )
-
     return value
 
 
@@ -1021,7 +1007,9 @@ class Fido2TokenClass(TokenClass):
         """
 
         # Determine attestation and user verification preferences from policies
-        enrollment_policies = Fido2EnrollmentPolicies(user, self.getRealms())
+        enrollment_policies = Fido2EnrollmentPolicies(
+            user=get_token_owner(self), token_realms=self.getRealms()
+        )
         attestation_preference = enrollment_policies.get_attestation_preference()
         uv_requirement = enrollment_policies.get_user_verification_requirement()
         rk_requirement = enrollment_policies.get_resident_key_requirement()
@@ -1173,7 +1161,7 @@ class Fido2TokenClass(TokenClass):
 
         # Check if the authenticator's AAGUID is allowed by policy
         allowed_aaguids = Fido2EnrollmentPolicies(
-            user, self.getRealms()
+            user=get_token_owner(self), token_realms=self.getRealms()
         ).get_allowed_authenticators()
         if allowed_aaguids and aaguid_str.lower() not in allowed_aaguids:
             log.warning(
@@ -1279,7 +1267,7 @@ class Fido2TokenClass(TokenClass):
         """
         if not (
             rp_info := Fido2EnrollmentPolicies(
-                user, self.getRealms()
+                user=get_token_owner(self), token_realms=self.getRealms()
             ).get_rp_id_and_name()
         ):
             g.audit["info"] = (
@@ -1323,7 +1311,7 @@ class Fido2TokenClass(TokenClass):
     def _is_authenticator_allowed_for_authentication(self, user=None) -> bool:
         """Check authorization policy for this token's enrolled authenticator."""
         allowed_aaguids = Fido2AuthorizationPolicies(
-            user, self.getRealms()
+            user=get_token_owner(self), token_realms=self.getRealms()
         ).get_allowed_authenticators()
         if not allowed_aaguids:
             return True
@@ -1434,7 +1422,7 @@ class Fido2TokenClass(TokenClass):
 
         # Determine user verification requirement from authentication policy.
         authentication_policies = Fido2AuthenticationPolicies(
-            token_user, self.getRealms()
+            user=get_token_owner(self), token_realms=self.getRealms()
         )
         uv_requirement = authentication_policies.get_user_verification_requirement()
 
@@ -1658,3 +1646,55 @@ class Fido2TokenClass(TokenClass):
                     return self._verify_assertion(anOtpVal, saved_challenge_b64)
 
         return -1
+
+
+def _get_single_policy(
+    policy_name, policy_scope="authentication", user=None, realms=None
+):
+    """Retrieves a policy value and checks if the value is consistent across realms.
+
+    :param policy_name: the name of the policy to retrieve
+    :param policy_scope: the scope of the policy (default: "authentication")
+    :param user: the user for user-specific policies (optional)
+    :param realms: the realms that his policy should be effective in
+    """
+
+    login = None
+    action_values = set()
+    client = _get_client()
+
+    if user and user.login and user.realm:
+        realms = [user.realm]
+        login = user.login
+
+    if realms is None or len(realms) == 0:
+        realms = ["/:no realm:/"]
+
+    for realm in realms:
+        policy = get_client_policy(
+            client=client,
+            scope=policy_scope,
+            action=policy_name,
+            realm=realm,
+            user=login,
+            userObj=user,
+        )
+
+        action_value = get_action_value(
+            policy, scope=policy_scope, action=policy_name, default=""
+        )
+
+        if action_value:
+            action_values.add(action_value)
+
+    if not action_values:
+        return None
+
+    if len(action_values) > 1:
+        msg = (
+            f"conflicting policy values {action_values!r} found for "
+            f"realm set: {realms!r}"
+        )
+        raise Exception(msg)
+
+    return action_values.pop()

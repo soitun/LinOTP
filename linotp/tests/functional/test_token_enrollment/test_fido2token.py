@@ -94,6 +94,7 @@ class TestFido2AdminEnrollment(TestController):
                 "serial": serial,
                 "type": "fido2",
                 "attestationResponse": attestation_response,
+                "user": "passthru_user1@myDefRealm",
             },
             content_type="application/json",
         )
