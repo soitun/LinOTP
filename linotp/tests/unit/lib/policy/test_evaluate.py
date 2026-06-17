@@ -304,5 +304,243 @@ class TestGetClientPolicy(unittest.TestCase):
         assert policies_for_realm.get("p2")
         assert not policies_for_realm.get("p3")
 
+    # Further testing of policy evaluation. Check LINOTP-2409 for deeper context.
+    def test_s1_user_realm_specific_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k]
+            for k in (
+                "user_realm_specific_policy",
+                "user_specific_policy",
+                "global_policy",
+            )
+        }
 
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("foo")
+        policy_eval.filter_for_realm("bar")
+        res = policy_eval.evaluate(policies)
+
+        assert "user_realm_specific_policy" in res
+        assert len(res) == 1
+
+    def test_s1_user_specific_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k]
+            for k in (
+                "user_realm_specific_policy",
+                "user_specific_policy",
+                "global_policy",
+            )
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("foo")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "user_specific_policy" in res
+        assert "user_realm_specific_policy" not in res
+        assert "realm_specific_policy" not in res
+        assert "global_policy" not in res
+
+    def test_s1_global_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k]
+            for k in (
+                "user_realm_specific_policy",
+                "user_specific_policy",
+                "global_policy",
+            )
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("*")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "global_policy" in res
+        assert "user_realm_specific_policy" not in res
+        assert "realm_specific_policy" not in res
+
+    def test_s1_global_policy_wins_with_empty_user(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k]
+            for k in (
+                "user_realm_specific_policy",
+                "user_specific_policy",
+                "global_policy",
+            )
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "global_policy" in res
+        assert "user_realm_specific_policy" not in res
+        assert "realm_specific_policy" not in res
+
+    def test_s2_user_specific_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("user_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("foo")
+        policy_eval.filter_for_realm("bar")
+        res = policy_eval.evaluate(policies)
+
+        assert "user_specific_policy" in res
+        assert len(res) == 1
+
+    def test_s2_user_specific_policy_wins2(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("user_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("foo")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "user_specific_policy" in res
+        assert len(res) == 1
+
+    def test_s2_global_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("user_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("*")
+        policy_eval.filter_for_realm("bar")
+        res = policy_eval.evaluate(policies)
+
+        assert "global_policy" in res
+        assert "user_specific_policy" not in res
+
+    def test_s2_global_policy_wins2(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("user_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("*")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "global_policy" in res
+
+    def test_s3_global_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("user_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("*")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "global_policy" in res
+        assert "user_specific_policy" not in res
+        assert len(res) == 1
+
+    def test_s4_realm_specific_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("realm_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("foo")
+        policy_eval.filter_for_realm("bar")
+        res = policy_eval.evaluate(policies)
+
+        assert "realm_specific_policy" in res
+        assert len(res) == 1
+
+    def test_s4_realm_specific_policy_wins2(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("realm_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("*")
+        policy_eval.filter_for_realm("bar")
+        res = policy_eval.evaluate(policies)
+
+        assert "realm_specific_policy" in res
+        assert len(res) == 1
+
+    def test_s4_global_policy_wins(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("realm_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("foo")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "global_policy" in res
+        assert "realm_specific_policy" not in res
+        assert len(res) == 1
+
+    def test_s4_global_policy_wins2(self):
+        policies = {
+            k: SPEC_TEST_POLICIES[k] for k in ("realm_specific_policy", "global_policy")
+        }
+
+        policy_eval = PolicyEvaluator({})
+        policy_eval.filter_for_user("*")
+        policy_eval.filter_for_realm("*")
+        res = policy_eval.evaluate(policies)
+
+        assert "global_policy" in res
+        assert "realm_specific_policy" not in res
+        assert len(res) == 1
+
+
+SPEC_TEST_POLICIES = {
+    "user_realm_specific_policy": {
+        "name": "user_realm_specific_policy",
+        "user": "foo",
+        "realm": "bar",
+        "client": "*",
+        "time": "*",
+        "action": "tokenlabel=user_realm_specific",
+        "scope": "enrollment",
+        "active": "True",
+    },
+    "user_specific_policy": {
+        "name": "user_specific_policy",
+        "user": "foo",
+        "realm": "*",
+        "client": "*",
+        "time": "*",
+        "action": "tokenlabel=user_specific",
+        "scope": "enrollment",
+        "active": "True",
+    },
+    "realm_specific_policy": {
+        "name": "realm_specific_policy",
+        "user": "*",
+        "realm": "bar",
+        "client": "*",
+        "time": "*",
+        "action": "tokenlabel=realm_specific",
+        "scope": "enrollment",
+        "active": "True",
+    },
+    "global_policy": {
+        "name": "global",
+        "user": "*",
+        "realm": "*",
+        "client": "*",
+        "time": "*",
+        "action": "tokenlabel=global",
+        "scope": "enrollment",
+        "active": "True",
+    },
+}
 # eof #
