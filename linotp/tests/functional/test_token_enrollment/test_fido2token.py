@@ -393,3 +393,81 @@ class TestFido2AdminEnrollment(TestController):
             content_type="application/json",
         )
         assert response.json["result"]["status"] is False, response.json
+
+    def test_enroll_fido2_aggregates_allowed_authenticators_from_tokenrealms(self):
+        """Enrollment accepts an AAGUID allowed in either of two token realms."""
+        admin_user = "fido2_realm_admin"
+        self.create_policy(
+            {
+                "name": "fido2_init_two_realms",
+                "scope": "admin",
+                "action": "initFIDO2",
+                "user": admin_user,
+                "realm": "myDefRealm, myOtherRealm",
+                "active": True,
+            }
+        )
+        self.create_policy(
+            {
+                "name": "fido2_allowed_auth_def",
+                "scope": "enrollment",
+                "action": (
+                    "fido2_allowed_authenticators="
+                    "00000000-0000-0000-0000-000000000000 "
+                    "00000000-0000-0000-0000-000000000001"
+                ),
+                "user": "*",
+                "realm": "myDefRealm",
+                "active": True,
+            }
+        )
+        self.create_policy(
+            {
+                "name": "fido2_allowed_auth_other",
+                "scope": "enrollment",
+                "action": (
+                    f"fido2_allowed_authenticators={_AAGUID} "
+                    "11111111-1111-1111-1111-111111111111"
+                ),
+                "user": "*",
+                "realm": "myOtherRealm",
+                "active": True,
+            }
+        )
+
+        device = SoftWebauthnDevice()
+        response = self.make_admin_request(
+            "init",
+            params={"type": "fido2"},
+            auth_user=admin_user,
+        )
+        assert response.json["result"]["status"] is True, response.json
+
+        detail = response.json["detail"]
+        serial = detail["serial"]
+        response = self.make_admin_request(
+            "show",
+            params={"serial": serial},
+            auth_user=admin_user,
+        )
+        token_data = response.json["result"]["value"]["data"][0]
+        assert set(token_data["LinOtp.RealmNames"]) == {
+            "mydefrealm",
+            "myotherrealm",
+        }
+
+        attestation_response = device.create(
+            detail["registerrequest"], origin="https://localhost"
+        )
+        response = self.make_admin_request(
+            "init",
+            params={
+                "serial": serial,
+                "type": "fido2",
+                "attestationResponse": attestation_response,
+            },
+            auth_user=admin_user,
+            content_type="application/json",
+        )
+        assert response.json["result"]["status"] is True, response.json
+        assert response.json["result"]["value"] is True, response.json

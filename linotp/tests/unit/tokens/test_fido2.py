@@ -151,7 +151,9 @@ def _call_aggregated(policies, action=_ACTION):
             return_value={"enrollment": {}},
         ),
     ):
-        return _get_aggregated_fido2_policy_values(action, user)
+        return _get_aggregated_fido2_policy_values(
+            action, user, token_realms=[user.realm]
+        )
 
 
 def test_aggregated_none_user_with_token_realm():

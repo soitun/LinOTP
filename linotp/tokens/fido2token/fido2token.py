@@ -153,7 +153,7 @@ from flask_babel import gettext as _
 from linotp.lib.auth.validate import check_pin
 from linotp.lib.context import request_context as context
 from linotp.lib.error import ParameterError, TokenAdminError
-from linotp.lib.policy import get_client_policy, get_tokenlabel
+from linotp.lib.policy import get_client_policy, get_single_policy_value, get_tokenlabel
 from linotp.lib.policy.action import get_action_value
 from linotp.lib.policy.processing import has_client_policy
 from linotp.lib.policy.util import _get_client
@@ -298,9 +298,7 @@ def compute_authenticator_types_options(
 # ---------------------------------------------------------------------- --
 
 
-def _get_fido2_policy_value(
-    action: str, owner, token_realms, scope="enrollment"
-) -> Any:
+def _get_fido2_policy_value(action: str, user, token_realms, scope="enrollment") -> Any:
     """Get a single enrollment policy value for the given user.
 
     :param action: policy action name (e.g. ``POLICY_ATTESTATION``)
@@ -310,10 +308,10 @@ def _get_fido2_policy_value(
     :return: policy value, or ``None`` when the user info is
         missing or no policy matches
     """
-    realms = [owner.realm] if owner and owner.login and owner.realm else token_realms
+    realms = [user.realm] if user and user.login and user.realm else token_realms
 
-    value = _get_single_policy(
-        policy_name=action, policy_scope=scope, user=owner, realms=realms
+    value = get_single_policy_value(
+        policy_name=action, scope=scope, user=user, realms=realms
     )
     return value
 
@@ -324,8 +322,8 @@ def _get_aggregated_fido2_policy_values(
     """Get aggregated values from matching enrollment policies at the
     same specificity level.
 
-    All matching policies are merged first (via ``get_client_policy``),
-    then a value is extracted from each matching policy separately.
+    The relevant realms are queried via ``get_client_policy``, then a value
+    is extracted from each matching policy separately.
     Useful when multiple policies define the same action with different
     values that should all be collected (e.g. allowed authenticator
     AAGUIDs).  Each value is split on whitespace and the results are
@@ -333,34 +331,42 @@ def _get_aggregated_fido2_policy_values(
 
     :param action: policy action name
     :param user: user object with ``login`` and ``realm``
-    :param token_realms: token realms (optional)
+    :param token_realms: realms assigned to the token
     :param scope: policy scope (default: "enrollment")
-    :return: list of unique lowercased policy values, or empty list
-        if user info is missing or no policies match
+    :return: list of unique lowercased policy values, or empty list if no
+        policies match
+    :raises ParameterError: if the user's realm is not one of the token realms
     """
-    if token_realms:
-        realm = user.realm if user and user.realm in token_realms else (token_realms[0])
+    token_realms = token_realms or []
+
+    if user and user.realm:
+        if user.realm not in token_realms:
+            msg = _("The user's realm `{0}` is not assigned to the token.").format(
+                user.realm
+            )
+            raise ParameterError(msg)
+        realms = [user.realm]
     else:
-        realm = user.realm if user and user.realm else ""
-    policies = get_client_policy(
-        context["Client"],
-        scope=scope,
-        user=user.login if user else "",
-        realm=realm or "",
-        action=action,
-    )
-    if not policies:
-        return []
+        realms = token_realms
 
     policy_values = []
-    for name, definition in policies.items():
-        value = get_action_value(
-            {name: definition},
+    for realm in realms:
+        policies = get_client_policy(
+            context["Client"],
             scope=scope,
+            user=user.login if user else "",
+            realm=realm,
             action=action,
         )
-        if value is not None:
-            policy_values.append(value)
+
+        for name, definition in policies.items():
+            value = get_action_value(
+                {name: definition},
+                scope=scope,
+                action=action,
+            )
+            if value is not None:
+                policy_values.append(value)
 
     result = {v.lower() for value in policy_values for v in value.split()}
 
@@ -1646,55 +1652,3 @@ class Fido2TokenClass(TokenClass):
                     return self._verify_assertion(anOtpVal, saved_challenge_b64)
 
         return -1
-
-
-def _get_single_policy(
-    policy_name, policy_scope="authentication", user=None, realms=None
-):
-    """Retrieves a policy value and checks if the value is consistent across realms.
-
-    :param policy_name: the name of the policy to retrieve
-    :param policy_scope: the scope of the policy (default: "authentication")
-    :param user: the user for user-specific policies (optional)
-    :param realms: the realms that his policy should be effective in
-    """
-
-    login = None
-    action_values = set()
-    client = _get_client()
-
-    if user and user.login and user.realm:
-        realms = [user.realm]
-        login = user.login
-
-    if realms is None or len(realms) == 0:
-        realms = ["/:no realm:/"]
-
-    for realm in realms:
-        policy = get_client_policy(
-            client=client,
-            scope=policy_scope,
-            action=policy_name,
-            realm=realm,
-            user=login,
-            userObj=user,
-        )
-
-        action_value = get_action_value(
-            policy, scope=policy_scope, action=policy_name, default=""
-        )
-
-        if action_value:
-            action_values.add(action_value)
-
-    if not action_values:
-        return None
-
-    if len(action_values) > 1:
-        msg = (
-            f"conflicting policy values {action_values!r} found for "
-            f"realm set: {realms!r}"
-        )
-        raise Exception(msg)
-
-    return action_values.pop()
