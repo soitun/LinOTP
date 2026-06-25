@@ -122,7 +122,7 @@ class TestUserserviceAuthController(TestController):
         policy = {
             "name": "T1",
             "action": "enrollHMAC, mfa_login, delete, history",
-            "user": " passthru.*.myDefRes:",
+            "user": "*",
             "realm": "*",
             "scope": "selfservice",
         }

@@ -91,7 +91,7 @@ class TestUserserviceLogin(TestUserserviceController):
             + f'imprint_url="{imprint_url}", '
             + f'footer_text="{footer_text}", '
             + f"privacy_notice_url={privacy_notice_url}, ",
-            "user": " passthru.*.myDefRes:",
+            "user": "*",
             "realm": "*",
             "scope": "selfservice",
         }
@@ -305,7 +305,7 @@ class TestUserserviceLogin(TestUserserviceController):
         policy = {
             "name": "mfa_login",
             "action": "mfa_login, history",
-            "user": " passthru.*.myDefRes:",
+            "user": "*",
             "realm": "*",
             "scope": "selfservice",
         }
@@ -402,7 +402,7 @@ class TestUserserviceLogin(TestUserserviceController):
         policy = {
             "name": "mfa_login",
             "action": "mfa_login, history",
-            "user": " passthru.*.myDefRes:",
+            "user": "*",
             "realm": "*",
             "scope": "selfservice",
         }
@@ -1023,7 +1023,7 @@ class TestUserserviceLogin(TestUserserviceController):
         policy = {
             "name": "mfa_login",
             "action": "mfa_login, history",
-            "user": " passthru.*.myDefRes:",
+            "user": "*",
             "realm": "*",
             "scope": "selfservice",
         }
@@ -1180,7 +1180,7 @@ class TestUserserviceLogin(TestUserserviceController):
         policy = {
             "name": "mfa_login",
             "action": "mfa_login, history",
-            "user": " passthru.*.myDefRes:",
+            "user": "*",
             "realm": "*",
             "scope": "selfservice",
         }
