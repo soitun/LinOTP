@@ -127,6 +127,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI commands failing due to invalid configurations now return a meaningfull error message instead of stacktrace.
 - Audit entries for failed `userservice/enroll` requests now include the reason in `info`.
 - The `linotp support` command now works correctly again.
+- Fixed an issue where realm- or user-scoped policies were incorrectly applied when no user or realm context was present. In particular, selfservice policies such as `mfa_login`, `autoassignment`, and `autoenrollment`, evaluated before any user context is available, now correctly match only global policies. This may be a breaking change in cases where configurations relied on the defective evaluation of these selfservice policies.
+
 
 ## [3.4.4-1] - 2025-06-18
 

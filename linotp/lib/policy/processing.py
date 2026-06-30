@@ -216,27 +216,13 @@ def get_client_policy(
 
     policy_eval = PolicyEvaluator(get_policies())
 
-    if realm:
-        policy_eval.filter_for_realm(realm)
-
-    if scope:
-        policy_eval.filter_for_scope(scope)
-
-    if action:
-        policy_eval.filter_for_action(action)
-
-    if client:
-        policy_eval.filter_for_client(client)
-
+    policy_eval.filter_for_scope(scope)
+    policy_eval.filter_for_action(action)
+    policy_eval.filter_for_user(userObj or user or "*")
+    policy_eval.filter_for_realm(realm or (userObj.realm if userObj else None) or "*")
+    policy_eval.filter_for_client(client)
     policy_eval.filter_for_time()
-
-    if active_only:
-        policy_eval.filter_for_active(state=True)
-
-    if userObj:
-        policy_eval.filter_for_user(userObj)
-    elif user:
-        policy_eval.filter_for_user(user)
+    policy_eval.filter_for_active(state=active_only)
 
     policies = policy_eval.evaluate()
 
@@ -277,8 +263,7 @@ def has_client_policy(
 
     param = {}
 
-    if realm:
-        param["realm"] = realm
+    param["realm"] = realm or (userObj.realm if userObj else None) or "*"
 
     if scope:
         param["scope"] = scope
@@ -292,10 +277,7 @@ def has_client_policy(
     if client:
         param["client"] = client
 
-    if userObj:
-        param["user"] = userObj
-    elif user:
-        param["user"] = user
+    param["user"] = userObj or user or "*"
 
     policies = policy_eval.has_policy(param)
 
