@@ -151,11 +151,34 @@ def _call_aggregated(policies, action=_ACTION):
             return_value={"enrollment": {}},
         ),
     ):
-        return _get_aggregated_fido2_policy_values(action, user)
+        return _get_aggregated_fido2_policy_values(
+            action, user, token_realms=[user.realm]
+        )
 
 
-def test_aggregated_none_user_returns_empty():
-    assert _get_aggregated_fido2_policy_values("action", None) == []
+def test_aggregated_none_user_with_token_realm():
+    """None user falls back to token_realm for policy lookup."""
+    policies = _make_policy("pol1", _ACTION, "AAAA-1111")
+    with (
+        patch(f"{_MODULE}.context", {"Client": "127.0.0.1"}),
+        patch(f"{_MODULE}.get_client_policy", return_value=policies) as mock_policy,
+        patch(
+            "linotp.lib.policy.action.get_policy_definitions",
+            return_value={"enrollment": {}},
+        ),
+    ):
+        result = _get_aggregated_fido2_policy_values(
+            _ACTION, None, token_realms=["myRealm"]
+        )
+        assert result == ["aaaa-1111"]
+        # Verify token_realm was used in the policy lookup
+        mock_policy.assert_called_once_with(
+            "127.0.0.1",
+            scope="enrollment",
+            user="",
+            realm="myRealm",
+            action=_ACTION,
+        )
 
 
 def test_aggregated_no_policies_returns_empty():

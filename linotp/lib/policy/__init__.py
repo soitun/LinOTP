@@ -3466,7 +3466,9 @@ def get_partition(realms, user):
     return action_values.pop()
 
 
-def get_single_auth_policy(policy_name, user=None, realms=None):
+def get_single_policy_value(
+    policy_name, user=None, realms=None, scope="authentication"
+):
     """Retrieves a policy value and checks if the value is consistent across realms.
 
     :param policy_name: the name of the policy, e.g:
@@ -3474,10 +3476,9 @@ def get_single_auth_policy(policy_name, user=None, realms=None):
         * qrtoken_pairing_callback_sms
         * qrtoken_challenge_response_url
         * qrtoken_challenge_response_sms
-
+    :param scope: the policy scope, e.g. authentication, enrollment
     :param realms: the realms that his policy should be effective in
     """
-
     login = None
     action_values = set()
     client = _get_client()
@@ -3492,7 +3493,7 @@ def get_single_auth_policy(policy_name, user=None, realms=None):
     for realm in realms:
         policy = get_client_policy(
             client=client,
-            scope="authentication",
+            scope=scope,
             action=policy_name,
             realm=realm,
             user=login,
@@ -3500,7 +3501,7 @@ def get_single_auth_policy(policy_name, user=None, realms=None):
         )
 
         action_value = get_action_value(
-            policy, scope="authentication", action=policy_name, default=""
+            policy, scope=scope, action=policy_name, default=""
         )
 
         if action_value:
@@ -3517,6 +3518,22 @@ def get_single_auth_policy(policy_name, user=None, realms=None):
         raise Exception(msg)
 
     return action_values.pop()
+
+
+def get_single_auth_policy(policy_name, user=None, realms=None):
+    """Retrieves a policy value and checks if the value is consistent across realms.
+
+    :param policy_name: the name of the policy, e.g:
+        * qrtoken_pairing_callback_url
+        * qrtoken_pairing_callback_sms
+        * qrtoken_challenge_response_url
+        * qrtoken_challenge_response_sms
+
+    :param realms: the realms that his policy should be effective in
+    """
+    return get_single_policy_value(
+        policy_name=policy_name, user=user, realms=realms, scope="authentication"
+    )
 
 
 def match_allowed_realms(scope: str, action: str, requested_realms: list[str]):
