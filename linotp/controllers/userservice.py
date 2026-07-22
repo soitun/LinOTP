@@ -292,15 +292,6 @@ class UserserviceController(BaseController):
 
         # ------------------------------------------------------------------ --
 
-        # build up general available variables
-
-        context = get_pre_context(g.client)
-        g.mfa_login = context["settings"]["mfa_login"]
-        g.autoassign = context["settings"]["autoassign"]
-        g.autoenroll = context["settings"]["autoenroll"]
-
-        # ------------------------------------------------------------------ --
-
         # Get the (possibly) authenticated user
         auth_type, identity, auth_state = get_auth_user(request)
 
@@ -558,7 +549,10 @@ class UserserviceController(BaseController):
 
             # check the authentication
 
-            if g.mfa_login:
+            mfa_login = get_selfservice_action_value(
+                action="mfa_login", user=user, default=False
+            )
+            if mfa_login:
                 res = self._mfa_login_check(user, passw, otp)
 
             else:
@@ -879,7 +873,12 @@ class UserserviceController(BaseController):
         if len(toks) == 0:
             th = TokenHandler()
             # if no token no otp, we might trigger an auto enroll
-            if g.autoenroll and not otp:
+            if (
+                get_selfservice_action_value(
+                    action="mfa_login_autoenroll", user=user, default=False
+                )
+                and not otp
+            ):
                 (auto_enroll_return, reply) = th.auto_enrollToken(passw, user)
                 if auto_enroll_return is False:
                     error = "autoenroll: {!r}".format(reply.get("error", ""))
@@ -887,8 +886,11 @@ class UserserviceController(BaseController):
 
         if otp:
             vh = ValidationHandler()
+            is_autoassign_enabled = get_selfservice_action_value(
+                action="mfa_login_autoassign", user=user, default=False
+            )
             res, reply = vh.checkUserPass(
-                user, passw + otp, autoassign_enabled=g.autoassign
+                user, passw + otp, autoassign_enabled=is_autoassign_enabled
             )
 
             if res:
@@ -1036,7 +1038,10 @@ class UserserviceController(BaseController):
 
             password = param["password"]
 
-            if g.mfa_login:
+            mfa_login = get_selfservice_action_value(
+                action="mfa_login", user=user, default=False
+            )
+            if mfa_login:
                 # allow the mfa login for users that have no token till now
                 # if the policy 'mfa_passOnNoToken' is defined with password
                 # only
@@ -1124,11 +1129,15 @@ class UserserviceController(BaseController):
                 th = TokenHandler()
 
                 # if no token and otp, we might do an auto assign
-                if g.autoassign and otp:
+                if otp and get_selfservice_action_value(
+                    action="mfa_login_autoassign", user=user, default=False
+                ):
                     ret = th.auto_assignToken(password + otp, user)
 
-                # if no token no otp, we might trigger an aouto enroll
-                elif g.autoenroll and not otp:
+                # if no token no otp, we might trigger an auto enroll
+                elif not otp and get_selfservice_action_value(
+                    action="mfa_login_autoenroll", user=user, default=False
+                ):
                     (auto_enroll_return, reply) = th.auto_enrollToken(password, user)
                     if auto_enroll_return is False:
                         error = "autoenroll: {!r}".format(reply.get("error", ""))
@@ -1253,7 +1262,7 @@ class UserserviceController(BaseController):
 
         """
         try:
-            pre_context = get_pre_context(g.client)
+            pre_context = get_pre_context()
             return sendResult(True, opt=pre_context)
 
         except Exception as exx:

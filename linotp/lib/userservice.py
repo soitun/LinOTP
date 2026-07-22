@@ -266,7 +266,7 @@ def check_session(request, user, client):
     return False
 
 
-def get_pre_context(client):
+def get_pre_context():
     """
     get the rendering context before the login is shown, so the rendering
     of the login page could be controlled if realm_box or mfa_login is
@@ -276,19 +276,8 @@ def get_pre_context(client):
     :return: context dict, with all rendering attributes
     """
 
-    # check for mfa_login, autoassign and autoenroll in policy definition
-    mfa_login_action = get_selfservice_action_value(action="mfa_login", default=False)
-
     mfa_3_fields_action = get_selfservice_action_value(
         action="mfa_3_fields", default=False
-    )
-
-    autoassign_action = get_selfservice_action_value(
-        action="mfa_login_autoassign", default=False
-    )
-
-    autoenroll_action = get_selfservice_action_value(
-        action="mfa_login_autoenroll", default=False
     )
 
     footer_text_action = get_selfservice_action_value(
@@ -310,10 +299,7 @@ def get_pre_context(client):
         "settings": {
             "default_realm": getDefaultRealm(),
             "realm_box": getRealmBox(),
-            "mfa_login": mfa_login_action,
             "mfa_3_fields": mfa_3_fields_action,
-            "autoassign": autoassign_action,
-            "autoenroll": autoenroll_action,
             "footer_text": footer_text_action,
             "imprint_url": imprint_url_action,
             "privacy_notice_url": privacy_notice_url_action,
@@ -336,7 +322,7 @@ def get_context(config, user: User, client: str):
     :return: context dict, with all rendering attributes
 
     """
-    context = get_pre_context(client)
+    context = get_pre_context()
 
     context["user"] = get_userinfo(user)
     context["tokenArray"] = getTokenForUser(user)

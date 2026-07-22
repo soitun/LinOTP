@@ -131,7 +131,9 @@ def get_selfservice_actions(user=None, action=None):
         # Now we want to gather all global and user specific actions for the given user
         all_actions = {}
         for action_name in action_names:
-            all_actions.update(_get_selfservice_action(client, scope, pparam, action_name))
+            all_actions.update(
+                _get_selfservice_action(client, scope, pparam, action_name)
+            )
 
         return all_actions
 
