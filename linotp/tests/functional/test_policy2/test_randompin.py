@@ -305,6 +305,39 @@ class TestRandompinController(TestController):
         # Login with Pin and OTP works (because PIN is set)
         self._validate_check_s(token["serial"], token["pin"] + token["otps"].popleft())
 
+    def test_selfservice_enroll_setpin(self):
+        """
+        selfservice sets a given pin on enroll
+        """
+        user = "aἰσχύλος"  # realm myDefRealm  # noqa: RUF001
+        pwd = "Πέρσαι"
+        token = deepcopy(self.tokens[0])
+
+        self.create_policy(self.enroll_policy)
+        self.create_policy(self.setotppin_policy)
+
+        # Enroll token with a given pin (no otp_pin_random policy)
+        self._enroll_token_in_selfservice(user, pwd, token)
+        # Login with the given Pin and OTP works
+        self._validate_check_s(token["serial"], token["pin"] + token["otps"].popleft())
+
+    def test_selfservice_enroll_setpin_random(self):
+        """
+        otp_pin_random sets no random pin when enrolling a token in selfservice when a pin is already given
+        """
+        user = "aἰσχύλος"  # realm myDefRealm  # noqa: RUF001
+        pwd = "Πέρσαι"
+        token = deepcopy(self.tokens[0])
+
+        self.create_policy(self.enroll_policy)
+        self.create_policy(self.setotppin_policy)
+        self.create_policy(self.randompin_policy)
+
+        # Enroll token with a given pin while otp_pin_random is active
+        self._enroll_token_in_selfservice(user, pwd, token)
+        # Login with the given Pin and OTP works (pin is not randomized)
+        self._validate_check_s(token["serial"], token["pin"] + token["otps"].popleft())
+
     def test_selfservice_assign(self):
         """
         userservice/assign is not affected by otp_pin_random
