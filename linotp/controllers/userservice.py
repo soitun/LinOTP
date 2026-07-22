@@ -871,12 +871,25 @@ class UserserviceController(BaseController):
 
         # ------------------------------------------------------------------ --
 
-        # if there is an otp, we can do a direct otp authentication
-
         otp = param.get("otp", "")
+        toks = getTokenForUser(g.authUser, active=True)
+
+        # If user has no token, we check if we can peform autoenrollment.
+        # We cannot delegate that to checkUserPass cause it returns False as result of autoenrollment.
+        if len(toks) == 0:
+            th = TokenHandler()
+            # if no token no otp, we might trigger an auto enroll
+            if g.autoenroll and not otp:
+                (auto_enroll_return, reply) = th.auto_enrollToken(passw, user)
+                if auto_enroll_return is False:
+                    error = "autoenroll: {!r}".format(reply.get("error", ""))
+                    raise Exception(error)
+
         if otp:
             vh = ValidationHandler()
-            res, reply = vh.checkUserPass(user, passw + otp)
+            res, reply = vh.checkUserPass(
+                user, passw + otp, autoassign_enabled=g.autoassign
+            )
 
             if res:
                 log.debug("Successfully authenticated user %r:", user)

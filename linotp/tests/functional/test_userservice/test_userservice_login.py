@@ -87,7 +87,7 @@ class TestUserserviceLogin(TestUserserviceController):
 
         policy = {
             "name": "no_mfa",
-            "action": "history, "
+            "action": "history, mfa_login_autoassign, mfa_login_autoenroll, "
             + f'imprint_url="{imprint_url}", '
             + f'footer_text="{footer_text}", '
             + f"privacy_notice_url={privacy_notice_url}, ",
@@ -110,6 +110,8 @@ class TestUserserviceLogin(TestUserserviceController):
         assert settings["imprint_url"] == imprint_url
         assert settings["privacy_notice_url"] == privacy_notice_url
         assert settings["footer_text"] == footer_text
+        assert settings["autoassign"] is True
+        assert settings["autoenroll"] is True
 
         # verify that the realm definitions contains only "realmname"
         # and "default" and no other sensitive information
@@ -187,6 +189,161 @@ class TestUserserviceLogin(TestUserserviceController):
 
         jresp = response.json
         assert jresp["result"]["value"] is True
+
+    def test_mfa_login_autoassign_requires_selfservice_policy(self):
+        """Autoassignment during userservice login requires its selfservice action."""
+
+        self.delete_all_policies()
+
+        serial = "mfa-login-autoassign"
+        token = {
+            "key": "4132333435363738393031323334353637383930",
+            "otp": "297991",
+        }
+
+        params = {
+            "serial": serial,
+            "type": "hmac",
+            "otpkey": token["key"],
+            "otplen": 6,
+            "realm": "myDefRealm",
+        }
+        response = self.make_admin_request("init", params=params)
+        assert "false" not in response, response
+
+        policy = {
+            "name": "autoassignment",
+            "active": True,
+            "scope": "enrollment",
+            "action": "autoassignment",
+            "user": "*",
+            "realm": "*",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        policy = {
+            "name": "mfa_login",
+            "action": "mfa_login",
+            "user": "*",
+            "realm": "*",
+            "scope": "selfservice",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        auth_data = {
+            "login": "passthru_user1@myDefRealm",
+            "password": "geheim1",
+            "otp": token["otp"],
+        }
+        response = self.client.post(
+            url(controller="userservice", action="login"), data=auth_data
+        )
+        assert response.json["result"]["value"] is False
+
+        response = self.make_admin_request("getTokenOwner", {"serial": serial})
+        content = response.json
+        assert content["result"]["status"]
+        assert content["result"]["value"] == {}
+
+        policy = {
+            "name": "mfa_login_autoassign",
+            "action": "mfa_login_autoassign",
+            "user": "*",
+            "realm": "*",
+            "scope": "selfservice",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        response = self.client.post(
+            url(controller="userservice", action="login"), data=auth_data
+        )
+        assert response.json["result"]["value"] is True
+
+        response = self.make_admin_request("getTokenOwner", {"serial": serial})
+        content = response.json
+        assert content["result"]["status"]
+        assert content["result"]["value"]["username"] == "passthru_user1"
+
+    def test_mfa_login_autoenroll_requires_selfservice_policy(self):
+        """Autoenrollment during userservice login requires its selfservice action."""
+
+        self.delete_all_policies()
+
+        response = self.define_email_provider()
+        assert "false" not in response, response
+
+        policy = {
+            "name": "emailprovider_newone",
+            "scope": "authentication",
+            "realm": "*",
+            "action": "email_provider=new_email_provider",
+            "user": "*",
+        }
+        response = self.make_system_request(action="setPolicy", params=policy)
+        assert "false" not in response, response
+
+        policy = {
+            "name": "autoenrollment",
+            "active": True,
+            "scope": "enrollment",
+            "action": "autoenrollment=email",
+            "user": "*",
+            "realm": "*",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        policy = {
+            "name": "mfa_login",
+            "action": "mfa_login",
+            "user": "*",
+            "realm": "*",
+            "scope": "selfservice",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        auth_data = {
+            "login": "passthru_user1@myDefRealm",
+            "password": "geheim1",
+        }
+        response = self.client.post(
+            url(controller="userservice", action="login"), data=auth_data
+        )
+        assert response.json["result"]["value"] is False
+        assert response.json["detail"]["tokenList"] == []
+
+        policy = {
+            "name": "mfa_login_autoenroll",
+            "action": "mfa_login_autoenroll",
+            "user": "*",
+            "realm": "*",
+            "scope": "selfservice",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        with patch(
+            "linotp.provider.emailprovider.SMTPEmailProvider.submitMessage",
+            return_value=(True, "email submitted"),
+        ):
+            response = self.client.post(
+                url(controller="userservice", action="login"), data=auth_data
+            )
+        assert response.json["result"]["value"] is False
+        token_list = response.json["detail"]["tokenList"]
+        assert len(token_list) == 1
+        assert token_list[0]["LinOtp.TokenType"] == "email"
+
+        response = self.make_admin_request(
+            "getTokenOwner", {"serial": token_list[0]["LinOtp.TokenSerialnumber"]}
+        )
+        content = response.json
+        assert content["result"]["status"]
+        assert content["result"]["value"]["username"] == "passthru_user1"
 
     def test_mfa_login_one_step(self):
         """test with one step mfa authentication."""

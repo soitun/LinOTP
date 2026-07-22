@@ -494,7 +494,7 @@ class ValidationHandler:
 
         return len(reply) > 0, reply
 
-    def checkUserPass(self, user, passw, options=None):
+    def checkUserPass(self, user, passw, options=None, *, autoassign_enabled=True):
         """
         :param user: the to be identified user
         :param passw: the identification pass
@@ -588,11 +588,12 @@ class ValidationHandler:
             g.audit["action_detail"] = "User has no tokens assigned"
 
             # here we check if we should to autoassign and try to do it
-            auto_assign_return = th.auto_assignToken(passw, user)
-            if auto_assign_return:
-                # We can not check the token, as the OTP value is already used!
-                # but we will auth the user....
-                return (True, opt)
+            if autoassign_enabled:
+                auto_assign_return = th.auto_assignToken(passw, user)
+                if auto_assign_return:
+                    # We can not check the token, as the OTP value is already used!
+                    # but we will auth the user....
+                    return (True, opt)
 
             auto_enroll_return, opt = th.auto_enrollToken(passw, user, options=options)
             if auto_enroll_return:
