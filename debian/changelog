@@ -1,4 +1,4 @@
-linotp (3.4.5~rc3-1) buster; urgency=medium
+linotp (3.4.5-1) buster; urgency=medium
 
   Fixes:
   * If `setOTPPIN` and `otp_pin_random` policies are set during selfservice enroll, the pin will no longer be randomized
@@ -11,7 +11,7 @@ linotp (3.4.5~rc3-1) buster; urgency=medium
   Misc:
   * update python dependencies
 
- -- LinOTP Packaging <packaging@linotp.de>  Fri, 12 Sep 2025 08:54:00:00 +0200
+ -- LinOTP Packaging <packaging@linotp.de>  Wed, 22 Jul 2026 12:00:00:00 +0000
 
 linotp (3.4.4-1) buster; urgency=medium
 
