@@ -21,7 +21,5 @@ repos:
     rev: 1.8.6
     hooks:
       - id: bandit
-        additional_dependencies:
-          - pbr
         args:
           [--severity-level, high, --confidence-level, all, -x, linotp/tests]
