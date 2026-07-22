@@ -283,12 +283,12 @@ def get_pre_context(client):
         action="mfa_3_fields", default=False
     )
 
-    autoassignment_action = get_selfservice_action_value(
-        action="autoassignment", default=False
+    autoassign_action = get_selfservice_action_value(
+        action="mfa_login_autoassign", default=False
     )
 
-    autoenrollment_action = get_selfservice_action_value(
-        action="autoenrollment", default=False
+    autoenroll_action = get_selfservice_action_value(
+        action="mfa_login_autoenroll", default=False
     )
 
     footer_text_action = get_selfservice_action_value(
@@ -312,8 +312,8 @@ def get_pre_context(client):
             "realm_box": getRealmBox(),
             "mfa_login": mfa_login_action,
             "mfa_3_fields": mfa_3_fields_action,
-            "autoassign": autoassignment_action,
-            "autoenroll": autoenrollment_action,
+            "autoassign": autoassign_action,
+            "autoenroll": autoenroll_action,
             "footer_text": footer_text_action,
             "imprint_url": imprint_url_action,
             "privacy_notice_url": privacy_notice_url_action,
