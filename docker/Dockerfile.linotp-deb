@@ -123,7 +123,8 @@ RUN  \
 # Use eatmydata to speed up apt-get and pip operations
 RUN apt-get update && apt-get install -y --no-install-recommends  eatmydata \
     && for F in apt-get pip3; do ln -s /usr/bin/eatmydata /usr/local/bin/$F; done \
-    && apt-get install -y --no-install-recommends curl gnupg
+    # ca-certificates is required to fetch the packaging keyring over HTTPS
+    && apt-get install -y --no-install-recommends ca-certificates curl gnupg
 # Add LinOTP packaging key to keyring in order to install
 # dependencies
 RUN test -z "$DEPENDENCY_DEB_REPO" \
@@ -132,7 +133,7 @@ RUN test -z "$DEPENDENCY_DEB_REPO" \
 RUN test -z "$DEPENDENCY_GPG_KEYID" \
     || apt-key adv --keyserver hkp://hkps.pool.sks-keyservers.net --recv-keys $DEPENDENCY_GPG_KEYID
 RUN test -z "$DEPENDENCY_GPG_KEY_URL" \
-    || curl $DEPENDENCY_GPG_KEY_URL | apt-key adv --import
+    || curl -fsSL $DEPENDENCY_GPG_KEY_URL | apt-key adv --import
 
 # Install package dependencies
 # - Those needed for building / administration of a Docker based linotp (first line)

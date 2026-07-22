@@ -17,7 +17,11 @@ variables:
   DEPENDENCY_DEB_REPO: http://debs-devel.corp.linotp.de/linotp3 buster linotp
   # DEPENDENCY_GPG_KEYID: 7CC736921C5A21B7
   DEPENDENCY_GPG_KEYID: ""
-  DEPENDENCY_GPG_KEY_URL: http://debs-devel.corp.linotp.de/misc/gpg/linotp-dev-archive-keyring.gpg
+  # Keyring used to verify the LinOTP dev repository. Bump this when the
+  # packaging key is rotated; the file is published under
+  # https://dist.linotp.org/debian/gpg-keys/.
+  LINOTP_ARCHIVE_KEYRING: linotp-archive-2026.6.gpg
+  DEPENDENCY_GPG_KEY_URL: https://dist.linotp.org/debian/gpg-keys/$LINOTP_ARCHIVE_KEYRING
   DOCKER_TAGS: $CI_PIPELINE_ID
   IMAGE_PREFIX_CI: $CI_REGISTRY/$CI_PROJECT_PATH/ci
   NOSE_COVER_PACKAGE: linotp
