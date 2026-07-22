@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New configurable enrollment policies for FIDO2 tokens:
     - `fido2_attestation_conveyance` — controls whether and how the authenticator's
       attestation statement is conveyed during registration (direct, indirect, none,
-      enterprise). Default: direct. 
+      enterprise). Default: direct.
     - `fido2_user_verification_requirement` — controls whether the authenticator must
       verify the user (e.g. via PIN or biometric) during registration (required,
       preferred, discouraged). Default: preferred.
@@ -129,6 +129,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `linotp support` command now works correctly again.
 - Fixed an issue where realm- or user-scoped policies were incorrectly applied when no user or realm context was present. In particular, selfservice policies such as `mfa_login`, `autoassignment`, and `autoenrollment`, evaluated before any user context is available, now correctly match only global policies. This may be a breaking change in cases where configurations relied on the defective evaluation of these selfservice policies.
 
+## [3.4.5-1] - 2026-07-22
+
+### Fixed
+
+- If `setOTPPIN` and `otp_pin_random` policies are set during selfservice enroll, the pin will no longer be randomized
+- Reverted the change introduced in 3.4.4 where `detail_on_success` would include
+  user information in responses when authentication succeeded via the `passOnNoToken`
+  policy and the user had no tokens assigned. The previous behavior (no user details
+  returned in this scenario) is restored, as the combination of these two policies
+  can expose user details without any authentication having taken place.
 
 ## [3.4.4-1] - 2025-06-18
 
