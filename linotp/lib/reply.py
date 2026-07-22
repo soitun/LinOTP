@@ -759,9 +759,7 @@ def get_details_for_response(response: Response) -> dict:
     if is_auth_return(success=login_successful, user=user):
         # LINOTP-2403 If authentication succeeded solely due to the
         # passOnNoToken policy user information must not be sent to the client.
-        auth_via_pass_on_no_token = g.request_context.get(
-            "auth_via_passOnNoToken"
-        )
+        auth_via_pass_on_no_token = g.request_context.get("auth_via_passOnNoToken")
 
         if login_successful and auth_via_pass_on_no_token:
             msg = f"User info omitted for {user.login}@{user.realm}: authentication succeeded via passOnNoToken policy."
