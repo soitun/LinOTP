@@ -623,6 +623,11 @@ class ValidationHandler:
             elif get_auth_passOnNoToken(user):
                 log.info("user %r has not token. PassOnNoToken set - authenticated!")
                 g.audit["action_detail"] = "Authenticated by passOnNoToken policy"
+
+                # LINOTP-2403 Store this in the request context so it can be evaluated later in the
+                # detail_on_success policy logic. If authentication succeeded solely due
+                # to the passOnNoToken policy, user information must not be sent to the client.
+                g.request_context["auth_via_passOnNoToken"] = True
                 return (True, opt)
 
             # if we have an user, check if we forward the request to another
