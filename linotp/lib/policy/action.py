@@ -32,7 +32,7 @@ from warnings import warn
 from linotp.lib.user import User
 
 from .definitions import get_policy_definitions
-from .processing import get_client_policy
+from .processing import get_client_policy, search_policy
 from .util import _get_client, parse_action_value
 
 log = logging.getLogger(__name__)
@@ -60,17 +60,47 @@ def get_selfservice_action_value(
     return action_value
 
 
+def _get_selfservice_action(client, scope, pparam, action):
+    """Resolve a single, concrete selfservice action for the given query.
+
+    If the action is among the user's effective actions (global or user
+    specific policy doesn't matter), it is returned as a resolved action,
+    e.g. {"enrollTOTP": True}.
+
+    """
+
+    policies = get_client_policy(client, scope=scope, action=action, **pparam)
+
+    if not policies:
+        return {}
+
+    pat = PolicyActionTyping()
+
+    resolved_action = {}
+    for policy in policies.values():
+        actions = parse_action_value(policy.get("action", {}))
+        try:
+            if action in actions:
+                resolved_action[action] = pat.convert(scope, action, actions[action])
+        except PolicyConversionError as err:
+            msg = f"Could not parse selfservice-policy '{policy['name']}': {err}"
+            raise PolicyConversionError(msg) from err
+
+    return resolved_action
+
+
 def get_selfservice_actions(user=None, action=None):
     """
-    This function returns the allowed actions in the self service portal
-    for the given user
+    Return the allowed selfservice actions for the given user.
 
-    if there was an action as parameter, we copy only this one
-    into the result set
-
-    action value will be type converted according to the policy definition
-
-    :return: dictionary with all actions
+    :param user: the user to check policies for - a User object, a login
+                 string, or None for the global/anonymous scope
+    :param action: the specific action name to resolve, or None to resolve
+                   every action defined by any selfservice policy
+    :return: a dict of the resolved action(s), keyed by action name, with
+             each value type converted according to the policy definition
+    :raises PolicyConversionError: if a policy's action value can't be
+             converted to the type declared in the policy definition
     """
 
     scope = "selfservice"
@@ -88,26 +118,24 @@ def get_selfservice_actions(user=None, action=None):
 
     log.debug("checking actions for scope=%s, realm=%r", scope, pparam.get("realm"))
 
-    policies = get_client_policy(client, scope=scope, action=action, **pparam)
+    if action is None:
+        # scope-only filtered - just used to discover which action names
+        # exist across the selfservice policies, not to evaluate anything
+        selfservice_policies = search_policy({"scope": scope})
 
-    if not policies:
-        return {}
+        action_names = set()
+        for policy in selfservice_policies.values():
+            # Update the set() with the action names of the selfservice policies
+            action_names.update(parse_action_value(policy.get("action", "")).keys())
 
-    pat = PolicyActionTyping()
+        # Now we want to gather all global and user specific actions for the given user
+        all_actions = {}
+        for action_name in action_names:
+            all_actions.update(_get_selfservice_action(client, scope, pparam, action_name))
 
-    all_actions = {}
-    for policy in policies.values():
-        actions = parse_action_value(policy.get("action", {}))
-        try:
-            if not action:
-                all_actions.update(pat.convert_actions(scope, actions))
-            elif action in actions:
-                all_actions[action] = pat.convert(scope, action, actions[action])
-        except PolicyConversionError as err:
-            msg = f"Could not parse selfservice-policy '{policy['name']}': {err}"
-            raise PolicyConversionError(msg) from err
+        return all_actions
 
-    return all_actions
+    return _get_selfservice_action(client, scope, pparam, action)
 
 
 def get_action_value(
