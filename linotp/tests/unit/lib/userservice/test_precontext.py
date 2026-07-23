@@ -69,9 +69,7 @@ class TestPrecontext(unittest.TestCase):
             "privacy",
         ]
 
-        client = "127.0.0.1"
-
-        assert get_pre_context(client) == {
+        assert get_pre_context() == {
             "version": "version",
             "copyright": "copyright",
             "realms": {},
