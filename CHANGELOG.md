@@ -76,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `userservice/enroll` requests for mOTP tokens may now omit the `otpkey` parameter, which will cause a random `otpkey` to be assigned by LinOTP. Clients can find out about this from the response.
 - Setting `WORKER_THREADS` to `auto` (or not setting it at all) will use “2 \* number of CPU cores + 1” threads.
 - The `userservice/context` and `userservice/pre_context` endpoints no longer expose internal realm or resolver details. They now only return the necessary fields (`realmname` and `default`, which is now a boolean) to improve security. This is breaking change.
+- Selfservice login policies `mfa_login`, `autoassignment`, and `autoenrollment` are now evaluated with the authenticated user and realm, so realm-/user-scoped policies apply only within their scope; global policies are unaffected. As a result, `userservice/pre_context` no longer advertises these settings. This is a breaking change: make the policy global if it should apply to everyone.
 - The texts in demo license are updated.
 
 ### Security
@@ -129,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI commands failing due to invalid configurations now return a meaningfull error message instead of stacktrace.
 - Audit entries for failed `userservice/enroll` requests now include the reason in `info`.
 - The `linotp support` command now works correctly again.
-- Fixed an issue where realm- or user-scoped policies were incorrectly applied when no user or realm context was present. In particular, selfservice policies such as `mfa_login`, `autoassignment`, and `autoenrollment`, evaluated before any user context is available, now correctly match only global policies. This may be a breaking change in cases where configurations relied on the defective evaluation of these selfservice policies.
+- Fixed an issue where realm- or user-scoped policies were incorrectly applied when no user or realm context was present.
 
 ## [3.4.5-1] - 2026-07-22
 
