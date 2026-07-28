@@ -3,6 +3,8 @@ include:
   - template: Jobs/SAST.gitlab-ci.yml
   - template: Jobs/Secret-Detection.gitlab-ci.yml
   - project: "dev/ext-project-packaging/ci-includes"
+    file: "linotp-container-ci-build.yml"
+  - project: "dev/ext-project-packaging/ci-includes"
     file: "linotp-container-ci-upload.yml"
 
 variables:
@@ -42,6 +44,7 @@ workflow:
 
 stages:
   - check-and-build
+  - build
   - test
   - lint
   - apidocs
@@ -61,40 +64,37 @@ build-pypi:
     - docker build -t "$PYPI_IMAGE_TAG" -f docker/Dockerfile.linotp --target testenv-pypi .
     - docker push "$PYPI_IMAGE_TAG"
 
-build-docker:
-  stage: check-and-build
+# LinOTP builds three images from one Dockerfile: the main image plus the
+# `testenv` and `testimg` build targets. Override the shared build-image
+# job's script to build all three through .build-image-buildx (which
+# carries the media-types HEALTHCHECK fix and the standard de.linotp.*
+# labels); image, stage (`build`), before_script (docker login) and the
+# inherited test-healthcheck guard all come from
+# linotp-container-ci-build.yml. `needs: []` keeps it starting at pipeline
+# start, in parallel with the check-and-build jobs.
+build-image:
   needs: []
-  image: docker:latest
-  before_script:
-    - !reference [.docker-registry]
   script:
-    # We're using labels to add some interesting build metadata to the
-    # container image. This makes it easier to identify exactly what is
-    # in the image. The `IMAGE_VERSION` normalizes versions to X.Y.Z format,
-    # removing dev/rc suffixes and padding with .0 as needed.
-    - |
-      IMAGE_VERSION="$(sed -Ene '/__version__ =/{s/^.*= "(.*)"/\1/;s/\.dev[0-9]+//;s/rc[0-9]+//;s/^([0-9]+)$/\1.0.0/;s/^([0-9]+\.[0-9]+)$/\1.0/;p}' linotp/__init__.py)"
-      DATE=$(date +"%Y%m%d")
-      LABEL_ARGS="
-        --label de.linotp.commit-ref=$CI_COMMIT_REF_NAME
-        --label de.linotp.commit-hash=$CI_COMMIT_SHORT_SHA
-        --label de.linotp.image-tag=$IMAGE_VERSION-$DATE
-        --label de.linotp.version=$IMAGE_VERSION
-      "
-
-      # Build all images with the same labels
-      docker buildx build --provenance false -t "$DOCKER_IMAGE_TAG" $LABEL_ARGS -f docker/Dockerfile.linotp .
-      docker push "$DOCKER_IMAGE_TAG"
-      docker buildx build --provenance false -t "$DOCKER_TEST_ENV_IMAGE_TAG" $LABEL_ARGS --target testenv -f docker/Dockerfile.linotp .
-      docker push "$DOCKER_TEST_ENV_IMAGE_TAG"
-      docker buildx build --provenance false -t "$DOCKER_TEST_IMG_IMAGE_TAG" $LABEL_ARGS --target testimg -f docker/Dockerfile.linotp .
-      docker push "$DOCKER_TEST_IMG_IMAGE_TAG"
+    # Version metadata for the de.linotp.* labels: normalize to X.Y.Z,
+    # stripping dev/rc suffixes and padding with .0 as needed.
+    - IMAGE_VERSION="$(sed -Ene '/__version__ =/{s/^.*= "(.*)"/\1/;s/\.dev[0-9]+//;s/rc[0-9]+//;s/^([0-9]+)$/\1.0.0/;s/^([0-9]+\.[0-9]+)$/\1.0/;p}' linotp/__init__.py)"
+    - export DOCKERFILE=docker/Dockerfile.linotp
+    # main image -> $BUILD_IMAGE_TAG (== $DOCKER_IMAGE_TAG)
+    - !reference [.build-image-buildx, script]
+    # testenv image -> $DOCKER_TEST_ENV_IMAGE_TAG
+    - export DOCKER_EXTRA_BUILD_ARGS="--target testenv"
+    - export BUILD_IMAGE_TAG="$DOCKER_TEST_ENV_IMAGE_TAG"
+    - !reference [.build-image-buildx, script]
+    # testimg image -> $DOCKER_TEST_IMG_IMAGE_TAG
+    - export DOCKER_EXTRA_BUILD_ARGS="--target testimg"
+    - export BUILD_IMAGE_TAG="$DOCKER_TEST_IMG_IMAGE_TAG"
+    - !reference [.build-image-buildx, script]
 
 container_scanning:
   image:
     name: docker.io/aquasec/trivy:$TRIVY_IMAGE_VERSION
     entrypoint: [""]
-  needs: ["build-docker"]
+  needs: ["build-image"]
   variables:
     # SEVERITIES: CRITICAL,HIGH
     GIT_STRATEGY: none
@@ -452,7 +452,7 @@ functional-test-mysql-lower-case-table-names:
   extends:
     - .test-base
   image: $DOCKER_TEST_ENV_IMAGE_TAG
-  needs: [build-docker]
+  needs: [build-image]
   variables:
     LINOTP_HOST: "test-linotp"
     LINOTP_PORT: "5000"
