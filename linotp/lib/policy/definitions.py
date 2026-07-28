@@ -141,6 +141,14 @@ POLICY_DEFINTIONS = {
             "type": "bool",
             "desc": ("support mfa login if user has no token with password only"),
         },
+        "mfa_login_autoassign": {
+            "type": "bool",
+            "desc": "Allow selfservice MFA login to auto-assign an unassigned token.",
+        },
+        "mfa_login_autoenroll": {
+            "type": "bool",
+            "desc": "Allow selfservice MFA login to trigger automatic enrollment.",
+        },
         "footer_text": {
             "type": "str",
             "desc": "Text to show on the selfservice page in the footer"

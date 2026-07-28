@@ -38,17 +38,16 @@ from linotp.provider.smsprovider import SMPPSMSProvider
 from linotp.tests.tools.dummy_smpp_server import DummySMPPServer
 
 SMPP_HOST = "localhost"
-SMPP_PORT = "9123"
 SMPP_SYSTEMID = "smsclient"
 SMPP_PASSWORD = "foobar"
 
 
 @pytest.fixture
-def smpp_sms_provider():
+def smpp_sms_provider(dummy_smpp_server):
     prov = SMPPSMSProvider.SMPPSMSProvider()
     prov.config = {
         "server": SMPP_HOST,
-        "port": int(SMPP_PORT),
+        "port": dummy_smpp_server.port,
         "system_id": SMPP_SYSTEMID,
         "password": SMPP_PASSWORD,
         "system_type": "",
@@ -68,11 +67,13 @@ def smpp_sms_provider():
 def dummy_smpp_server():
     smpp_server = DummySMPPServer(
         host=SMPP_HOST,
-        port=SMPP_PORT,
+        port=0,
         system_id=SMPP_SYSTEMID,
         password=SMPP_PASSWORD,
     )
-    thread = threading.Thread(target=smpp_server.run_server)
+    smpp_server.__enter__()
+    smpp_server.port = smpp_server._sock.getsockname()[1]
+    thread = threading.Thread(target=smpp_server.listen)
     thread.daemon = True
     thread.start()
     time.sleep(1)  # Make sure server is ready

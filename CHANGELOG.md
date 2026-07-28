@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Activation challenges for QR and Push tokens can be triggered by users via `/userservice/activate_init`.
   This allows for a better UX, as an authenticated user does not have to provide their credentials again (current workflow `/validate`).
   Users need to have selfservice policies `activate_PushToken` or `activate_QRToken` respectively to be allowed to do so.
+- `userservice/login` can now use autoenrollment. It is enabled with the new selfservice policy action `mfa_login_autoenroll`; the token type is still selected by the existing enrollment policy `autoenrollment=`.
+- `userservice/login` autoassignment can now be explicitly configured with the new selfservice policy action `mfa_login_autoassign`. This is a breaking change: selfservice login autoassignment now requires this policy in addition to the existing enrollment policy `autoassignment`; previously it could run without any additional selfservice policy.
 - Allow `type` parameter in FIDO U2F client data as a synonym of `typ`.
 - Allow `webauthn.get` assertions during FIDO U2F token authentication in
   addition to `navigator.id.getAssertion`. This is because no modern browser
