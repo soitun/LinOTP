@@ -113,9 +113,9 @@ __all__ = [
 
 # -------------------------------------------------------------------------- --
 
-# for the the resolver name check we use a reqular expression
-
-resolver_name_pattern = re.compile(r"^[a-zA-Z0-9_\-]{4,}$")
+# for the resolver name check we use a regular expression. A resolver name
+# must be non-empty and may contain letters, numbers, underscore and hyphen.
+resolver_name_pattern = re.compile(r"^[a-zA-Z0-9_\-]+$")
 
 
 log = logging.getLogger(__name__)

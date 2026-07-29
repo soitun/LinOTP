@@ -92,3 +92,19 @@ class TestGetResolverList(unittest.TestCase):
         self._do_readonly_param_test("", False, False)
         self._do_readonly_param_test("true", False, True)
         self._do_readonly_param_test("false", False, False)
+
+
+class TestResolverName(unittest.TestCase):
+    """resolver-name validation in defineResolver (resolver_name_pattern).
+
+    Names may be any length >= 1; only the character set is constrained
+    (letters, numbers, underscore, hyphen).
+    """
+
+    def test_resolver_name_invalid_characters(self):
+        with pytest.raises(Exception, match=r"Resolver name is invalid."):
+            resolver.defineResolver({"type": "test", "name": "ab@"})
+
+    def test_resolver_name_empty(self):
+        with pytest.raises(Exception, match=r"Resolver name is invalid."):
+            resolver.defineResolver({"type": "test", "name": ""})
