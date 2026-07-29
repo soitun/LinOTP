@@ -35,6 +35,7 @@ import secrets
 from linotp.lib.challenges import Challenges
 from linotp.lib.config import getFromConfig
 from linotp.lib.context import request_context
+from linotp.lib.policy import get_auto_enrollment, get_autoassignment
 from linotp.lib.policy.action import (
     get_selfservice_action_value,
     get_selfservice_actions,
@@ -340,6 +341,16 @@ def get_context(config, user: User, client: str):
             context["actions"].append(action_name)
         else:
             context["settings"][action_name] = action_value
+
+    # The effectiveness of mfa_login_autoassign and mfa_login_autoenroll depends on their corresponding enrollment policy
+    # which is why they are potentially removed from the endpoint response.
+    if "mfa_login_autoassign" in context["actions"] and not get_autoassignment(user):
+        context["actions"].remove("mfa_login_autoassign")
+
+    if "mfa_login_autoenroll" in context["actions"]:
+        auto_enroll, _ = get_auto_enrollment(user)
+        if not auto_enroll:
+            context["actions"].remove("mfa_login_autoenroll")
 
     # Token limits
     all_token_limit = get_maxtoken_for_user(user)
