@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `userservice/context` and `userservice/pre_context` endpoints no longer expose internal realm or resolver details. They now only return the necessary fields (`realmname` and `default`, which is now a boolean) to improve security. This is breaking change.
 - Selfservice login policies `mfa_login`, `autoassignment`, and `autoenrollment` are now evaluated with the authenticated user and realm, so realm-/user-scoped policies apply only within their scope; global policies are unaffected. As a result, `userservice/pre_context` no longer advertises these settings. This is a breaking change: make the policy global if it should apply to everyone.
 - The texts in demo license are updated.
+- API: resolver names no longer impose a minimum length, bringing them to parity with realm names (a name just needs to be non-empty and use letters, numbers, `_` or `-`). The Manage-UI still enforces a four-character minimum client-side.
 
 ### Security
 
