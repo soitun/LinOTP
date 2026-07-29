@@ -110,8 +110,6 @@ class TestUserserviceLogin(TestUserserviceController):
         assert settings["imprint_url"] == imprint_url
         assert settings["privacy_notice_url"] == privacy_notice_url
         assert settings["footer_text"] == footer_text
-        assert settings["autoassign"] is True
-        assert settings["autoenroll"] is True
 
         # verify that the realm definitions contains only "realmname"
         # and "default" and no other sensitive information
@@ -344,6 +342,104 @@ class TestUserserviceLogin(TestUserserviceController):
         content = response.json
         assert content["result"]["status"]
         assert content["result"]["value"]["username"] == "passthru_user1"
+
+    def test_context_autoassign_requires_enrollment_policy(self):
+        """mfa_login_autoassign is only exposed in the context actions if
+        the enrollment-scope autoassignment policy is active for the user."""
+
+        self.delete_all_policies()
+
+        policy = {
+            "name": "mfa_login_autoassign",
+            "action": "history, mfa_login_autoassign",
+            "user": "*",
+            "realm": "*",
+            "scope": "selfservice",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        auth_data = {
+            "username": "passthru_user1@myDefRealm",
+            "password": "geheim1",
+        }
+        response = self.client.post("userservice/login", data=auth_data)
+        assert response.json["result"]["value"] is True
+
+        auth_cookie = self.get_cookies(response)["user_selfservice"]
+        params = {"session": auth_cookie}
+
+        # without the enrollment policy the action must be filtered out
+
+        response = self.client.post("userservice/context", data=params)
+        actions = response.json["detail"]["actions"]
+        assert "mfa_login_autoassign" not in actions
+
+        # once the enrollment policy is active, the action is exposed
+
+        policy = {
+            "name": "autoassignment",
+            "active": True,
+            "scope": "enrollment",
+            "action": "autoassignment",
+            "user": "*",
+            "realm": "*",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        response = self.client.post("userservice/context", data=params)
+        actions = response.json["detail"]["actions"]
+        assert "mfa_login_autoassign" in actions
+
+    def test_context_autoenroll_requires_enrollment_policy(self):
+        """mfa_login_autoenroll is only exposed in the context actions if
+        the enrollment-scope autoenrollment policy is active for the user."""
+
+        self.delete_all_policies()
+
+        policy = {
+            "name": "mfa_login_autoenroll",
+            "action": "history, mfa_login_autoenroll",
+            "user": "*",
+            "realm": "*",
+            "scope": "selfservice",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        auth_data = {
+            "username": "passthru_user1@myDefRealm",
+            "password": "geheim1",
+        }
+        response = self.client.post("userservice/login", data=auth_data)
+        assert response.json["result"]["value"] is True
+
+        auth_cookie = self.get_cookies(response)["user_selfservice"]
+        params = {"session": auth_cookie}
+
+        # without the enrollment policy the action must be filtered out
+
+        response = self.client.post("userservice/context", data=params)
+        actions = response.json["detail"]["actions"]
+        assert "mfa_login_autoenroll" not in actions
+
+        # once the enrollment policy is active, the action is exposed
+
+        policy = {
+            "name": "autoenrollment",
+            "active": True,
+            "scope": "enrollment",
+            "action": "autoenrollment=email",
+            "user": "*",
+            "realm": "*",
+        }
+        response = self.make_system_request("setPolicy", params=policy)
+        assert "false" not in response, response
+
+        response = self.client.post("userservice/context", data=params)
+        actions = response.json["detail"]["actions"]
+        assert "mfa_login_autoenroll" in actions
 
     def test_mfa_login_one_step(self):
         """test with one step mfa authentication."""

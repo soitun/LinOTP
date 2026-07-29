@@ -61,27 +61,19 @@ class TestPrecontext(unittest.TestCase):
         mock_getRealmBox.return_value = True
         mock_get_selfservice_action_value.side_effect = [
             False,
-            False,
-            False,
-            False,
             "footer",
             "imprint",
             "privacy",
         ]
 
-        client = "127.0.0.1"
-
-        assert get_pre_context(client) == {
+        assert get_pre_context() == {
             "version": "version",
             "copyright": "copyright",
             "realms": {},
             "settings": {
                 "default_realm": "realm",
                 "realm_box": True,
-                "mfa_login": False,
                 "mfa_3_fields": False,
-                "autoassign": False,
-                "autoenroll": False,
                 "footer_text": "footer",
                 "imprint_url": "imprint",
                 "privacy_notice_url": "privacy",

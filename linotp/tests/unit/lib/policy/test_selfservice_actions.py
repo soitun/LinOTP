@@ -122,7 +122,7 @@ class SelfserviceActionTest(unittest.TestCase):
 
         res = get_selfservice_actions(simple_user)
 
-        assert "setDescription" not in res
+        assert "setDescription" in res
         assert "disable" in res
 
         assert get_selfservice_actions(simple_user, "setDescription")
@@ -131,7 +131,9 @@ class SelfserviceActionTest(unittest.TestCase):
 
         # ----------------------------------------------------------------- --
 
-        # verify that user specific policy is honored
+        # verify that a user specific policy only overrides the actions it
+        # actually redefines - actions only present in the general policy
+        # must still be returned
 
         policy_set["simple_user"]["action"] = "setDescription, disable"
 
@@ -141,7 +143,8 @@ class SelfserviceActionTest(unittest.TestCase):
 
         assert "setDescription" in res
         assert "disable" in res
-        assert "reset" not in res
+        assert "enrollHMAC" in res
+        assert "reset" in res
 
     @patch("linotp.lib.token.context", new=fake_context)
     @patch("linotp.lib.policy.action.get_policy_definitions")
