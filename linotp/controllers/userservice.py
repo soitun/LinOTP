@@ -63,6 +63,7 @@ from linotp.lib.audit.base import get_token_num_info
 from linotp.lib.audit.base import search as audit_search
 from linotp.lib.auth.validate import ValidationHandler
 from linotp.lib.challenges import Challenges
+from linotp.lib.config import getFromConfig
 from linotp.lib.context import request_context
 from linotp.lib.error import ParameterError
 from linotp.lib.policy import (
@@ -96,6 +97,7 @@ from linotp.lib.token import (
     setPin,
     setPinUser,
 )
+from linotp.lib.type_utils import boolean
 from linotp.lib.user import (
     User,
     get_userinfo,
@@ -889,8 +891,11 @@ class UserserviceController(BaseController):
             is_autoassign_enabled = get_selfservice_action_value(
                 action="mfa_login_autoassign", user=user, default=False
             )
+            prepend_pin_active = boolean(getFromConfig("PrependPin", True))
             res, reply = vh.checkUserPass(
-                user, passw + otp, autoassign_enabled=is_autoassign_enabled
+                user,
+                passw + otp if prepend_pin_active else otp + passw,
+                autoassign_enabled=is_autoassign_enabled,
             )
 
             if res:
