@@ -173,6 +173,9 @@ RUN mkdir -p \
     && ln -s /usr/local/share/ca-certificates /ca-certificates \
     # remove setuptools due to vulnerabilities
     && rm -rf /usr/local/lib/python3.11/site-packages/setuptools* \
+    # remove pip (unused at runtime, app runs from $VENV_ROOT) due to its
+    # vendored msgpack (GHSA-6v7p-g79w-8964) vulnerability
+    && rm -rf /usr/local/lib/python3.11/site-packages/pip* \
     && useradd -r $LINOTP_USER \
     && chown -R $LINOTP_USER:$LINOTP_USER \
     $LINOTP_ROOT_DIR \
