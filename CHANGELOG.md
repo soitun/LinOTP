@@ -86,10 +86,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - CVE-2023-30861
 - Update `werkzeug` to version 3.1.4 to address multiple known vulnerabilities:
   - CVE-2024-34069, CVE-2024-49766, CVE-2024-49767, CVE-2025-66221
-- Update `cryptography` to version 45.0.3 to address multiple known vulnerabilities:
-  - CVE-2023-0286, CVE-2023-50782, CVE-2023-23931, CVE-2023-49083, CVE-2024-0727, GHSA-5cpq-8wj7-hf2v, GHSA-jm77-qphf-c4w8, GHSA-v8gr-m533-ghj9
+- Update `cryptography` to version 50.0.0 to address multiple known vulnerabilities:
+  - CVE-2023-0286, CVE-2023-50782, CVE-2023-23931, CVE-2023-49083, CVE-2024-0727, GHSA-5cpq-8wj7-hf2v,
+    GHSA-jm77-qphf-c4w8, GHSA-v8gr-m533-ghj9, CVE-2026-69247, CVE-2026-69249, CVE-2026-69248
 - Remove `setuptools` from container to address multiple known vulnerabilities:
-  - CVE-2024-6345, CVE-2025-47273
+  - CVE-2024-6345, CVE-2025-47273, CVE-2026-59890
+- Remove `pip` from container to address GHSA-6v7p-g79w-8964 vulnerability.
 - Update `idna` to version 3.15 to address the vulnerability in CVE-2026-45409
 - Update `urllib3` to version 2.7.0 to address multiple known vulnerabilities:
   - CVE-2025-66418, CVE-2025-66471, CVE-2026-44431, CVE-2026-44432
@@ -132,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Audit entries for failed `userservice/enroll` requests now include the reason in `info`.
 - The `linotp support` command now works correctly again.
 - Fixed an issue where realm- or user-scoped policies were incorrectly applied when no user or realm context was present.
+- Inactive PrependPin setting no longer breaks the selfservice login with mfa_3_fields used.
 
 ## [3.4.5-1] - 2026-07-22
 
