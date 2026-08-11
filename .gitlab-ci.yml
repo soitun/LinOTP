@@ -54,6 +54,20 @@ stages:
 .docker-registry: &docker-registry
   docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
 
+# Version metadata for the de.linotp.* labels applied by
+# .build-image-buildx: normalize to X.Y.Z, stripping dev/rc suffixes and
+# padding with .0 as needed. Reference this before .build-image-buildx,
+# which requires IMAGE_VERSION to be set.
+.image-version:
+  script:
+    - IMAGE_VERSION="$(sed -Ene '/__version__ =/{s/^.*= "(.*)"/\1/;s/\.dev[0-9]+//;s/rc[0-9]+//;s/^([0-9]+)$/\1.0.0/;s/^([0-9]+\.[0-9]+)$/\1.0/;p}' linotp/__init__.py)"
+
+# Pushed through .build-image-buildx rather than `docker build` +
+# `docker push` on purpose: the classic daemon remembers which repo it
+# previously pushed a layer to and asks the registry to cross-mount it
+# from there (`Mounted from ...-testimg`), which intermittently left a
+# dangling blob link and failed the manifest write with "blob unknown to
+# registry". BuildKit pushes the blobs itself instead.
 build-pypi:
   stage: check-and-build
   needs: []
@@ -61,8 +75,11 @@ build-pypi:
   before_script:
     - !reference [.docker-registry]
   script:
-    - docker build -t "$PYPI_IMAGE_TAG" -f docker/Dockerfile.linotp --target testenv-pypi .
-    - docker push "$PYPI_IMAGE_TAG"
+    - !reference [.image-version, script]
+    - export DOCKERFILE=docker/Dockerfile.linotp
+    - export DOCKER_EXTRA_BUILD_ARGS="--target testenv-pypi"
+    - export BUILD_IMAGE_TAG="$PYPI_IMAGE_TAG"
+    - !reference [.build-image-buildx, script]
 
 # LinOTP builds three images from one Dockerfile: the main image plus the
 # `testenv` and `testimg` build targets. Override the shared build-image
@@ -75,9 +92,7 @@ build-pypi:
 build-image:
   needs: []
   script:
-    # Version metadata for the de.linotp.* labels: normalize to X.Y.Z,
-    # stripping dev/rc suffixes and padding with .0 as needed.
-    - IMAGE_VERSION="$(sed -Ene '/__version__ =/{s/^.*= "(.*)"/\1/;s/\.dev[0-9]+//;s/rc[0-9]+//;s/^([0-9]+)$/\1.0.0/;s/^([0-9]+\.[0-9]+)$/\1.0/;p}' linotp/__init__.py)"
+    - !reference [.image-version, script]
     - export DOCKERFILE=docker/Dockerfile.linotp
     # main image -> $BUILD_IMAGE_TAG (== $DOCKER_IMAGE_TAG)
     - !reference [.build-image-buildx, script]
