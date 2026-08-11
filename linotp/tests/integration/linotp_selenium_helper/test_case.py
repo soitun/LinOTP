@@ -32,7 +32,7 @@ from unittest.case import SkipTest
 
 import pytest
 import urllib3
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from selenium import webdriver
 from selenium.common.exceptions import (
     StaleElementReferenceException,

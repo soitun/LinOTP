@@ -513,6 +513,86 @@ class TestUserserviceLogin(TestUserserviceController):
 
         assert "page" in response
 
+    def test_mfa_login_one_step_prependpin(self):
+        """test one step mfa authentication with PrependPin enabled and disabled."""
+
+        for prepend_pin in ["True", "False"]:
+            # -------------------------------------------------------------- --
+
+            # setup:
+            # delete all policies, set PrependPin, enroll token and mfa policy
+
+            self.delete_all_policies()
+
+            response = self.make_system_request(
+                "setConfig", params={"PrependPin": prepend_pin}
+            )
+            assert "false" not in response.body
+
+            otps = [
+                "870581",
+                "793334",
+                "088491",
+                "013126",
+                "818771",
+                "454594",
+                "217219",
+                "250710",
+                "478893",
+                "517407",
+            ]
+
+            otps.reverse()
+
+            params = {
+                "user": "passthru_user1@myDefRealm",
+                "pin": "Test123!",
+                "serial": "LoginToken",
+                "otpkey": "AD8EABE235FC57C815B26CEF3709075580B44738",
+            }
+
+            response = self.make_admin_request("init", params=params)
+            assert '"img": "<img ' in response, response
+
+            # define the selfservice policies
+
+            policy = {
+                "name": "mfa_login",
+                "action": "mfa_login, history",
+                "user": " passthru.*.myDefRes:",
+                "realm": "*",
+                "scope": "selfservice",
+            }
+
+            response = self.make_system_request("setPolicy", params=policy)
+            assert "false" not in response
+
+            # -------------------------------------------------------------- --
+
+            # run the authentication
+
+            auth_data = {
+                "username": "passthru_user1@myDefRealm",
+                "password": "geheim1",
+                "otp": otps.pop(),
+            }
+
+            response = self.client.post("userservice/login", data=auth_data)
+            response.body = response.data.decode("utf-8")
+            assert "false" not in response, f"PrependPin={prepend_pin}: {response}"
+
+            # verify that the authentication was successfull by quering history
+            auth_cookie = self.get_cookies(response)["user_selfservice"]
+            response = self.client.post(
+                "userservice/history", data={"session": auth_cookie}
+            )
+
+            response.body = response.data.decode("utf-8")
+
+            assert "page" in response, f"PrependPin={prepend_pin}: {response}"
+
+            self.delete_all_token()
+
     def test_audit_entry_login(self):
         self.test_mfa_login_one_step()
         audit_entry = self.get_last_audit_entry_for_action("userservice/login")

@@ -78,6 +78,7 @@ test = [
   "selenium",
   "mock",
   "setuptools",
+  "packaging",
   "freezegun",
   "coverage",
   "flaky",
