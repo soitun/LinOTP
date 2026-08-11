@@ -209,7 +209,7 @@ class TestMonitoringController(TestController):
         assert s_values.get("total users", -1) == 1, response
         assert s_values.get("active", -1) == 2, response
 
-    def test_token_status_combi(self):
+    def test_token_status_combination(self):
         self.create_token(serial="0021")
         self.create_token(serial="0022", user="root")
         self.create_token(serial="0023", realm="mydefrealm")
@@ -249,7 +249,7 @@ class TestMonitoringController(TestController):
         assert s_values.get("total", -1) == 5, response
         assert s_values.get("unassigned&inactive", -1) == 1, response
 
-    def test_token_status_silly_combi(self):
+    def test_token_status_silly_combination(self):
         requested_status = "assigned&unassigned"
 
         self.create_token(serial="0021")
@@ -393,7 +393,7 @@ class TestMonitoringController(TestController):
                 serial="0036", realm="myotherrealm", user="max2", active=False
             )
 
-            assingned_and_active = 1
+            assigned_and_active = 1
             # ------------------------------------------------------------- --
 
             # do the monitoring request and verify the result
@@ -402,7 +402,7 @@ class TestMonitoringController(TestController):
 
             value = response.json["result"]["value"]
             assert value["user-num"] == license_user_num, response
-            user_left = license_user_num - assingned_and_active
+            user_left = license_user_num - assigned_and_active
             assert value["user-left"] == user_left, response
 
     def test_token_based_license(self):
@@ -447,7 +447,7 @@ class TestMonitoringController(TestController):
                 active=False,
             )
 
-            assingned_and_active = 4
+            assigned_and_active = 4
 
             # ------------------------------------------------------------- --
 
@@ -457,11 +457,10 @@ class TestMonitoringController(TestController):
 
             value = response.json["result"]["value"]
             assert value["token-num"] == license_token_num, response
-            token_left = license_token_num - assingned_and_active
+            token_left = license_token_num - assigned_and_active
             assert value["token-left"] == token_left, response
 
     def test_check_encryption(self):
-        # do this test befor test_config
         response = self.make_monitoring_request("storageEncryption", params={})
         resp = json.loads(response.body)
         values = resp.get("result").get("value")
