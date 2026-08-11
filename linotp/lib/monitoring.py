@@ -254,9 +254,17 @@ class MonitorHandler:
 
         new_value_enc = getFromConfig(test_key, defVal=None)
 
+        new_value_dec = new_value_enc.get_unencrypted() if new_value_enc else None
+
         # if new_value_enc != old_value: something new was written into db
         # if new_value_enc != new_value_plain: the new value got encrypted
-        return bool(new_value_enc and new_value_plain != new_value_enc != old_value)
+        # if new_value_dec == new_value_plain: the new value got decrypted
+        # back to its original plaintext, proving the full roundtrip
+        return bool(
+            new_value_enc
+            and new_value_plain != new_value_enc != old_value
+            and new_value_dec == new_value_plain
+        )
 
     def resolverinfo(self, realm):
         """

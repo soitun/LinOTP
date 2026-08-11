@@ -29,6 +29,7 @@ import json
 import logging
 import os
 from datetime import datetime
+from unittest.mock import patch
 
 from freezegun import freeze_time
 
@@ -473,6 +474,38 @@ class TestMonitoringController(TestController):
         resp = json.loads(response.body)
         values = resp.get("result").get("value")
         assert values.get("encryption"), response
+
+    def test_check_encryption_decrypt_mismatch(self):
+        """
+        if the security module can encrypt but decrypts back to a value
+        that does not match the original plaintext, the roundtrip check
+        must report encryption=False instead of only comparing the
+        encrypted value against the plaintext
+        """
+        with patch(
+            "linotp.lib.security.default.DefaultSecurityModule.decryptPassword",
+            return_value=b"not-the-original-value",
+        ):
+            response = self.make_monitoring_request("storageEncryption", params={})
+
+        resp = json.loads(response.body)
+        values = resp.get("result").get("value")
+        assert values.get("encryption") is False, response
+
+    def test_check_encryption_decrypt_unreachable(self):
+        """
+        if the security module fails outright while decrypting, the
+        error must propagate as a monitoring error instead of being
+        reported as a successful check
+        """
+        with patch(
+            "linotp.lib.security.default.DefaultSecurityModule.decryptPassword",
+            side_effect=RuntimeError("hsm not reachable"),
+        ):
+            response = self.make_monitoring_request("storageEncryption", params={})
+
+        resp = json.loads(response.body)
+        assert not resp.get("result").get("status"), response
 
     def test_userinfo(self):
         response = self.make_monitoring_request("userinfo", params={})
