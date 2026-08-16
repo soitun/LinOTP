@@ -95,8 +95,7 @@ build-and-upload-pypi-image-testenv:
   before_script:
     - !reference [.docker-registry]
   script:
-    - docker build -t "$PYPI_IMAGE_TAG" -f docker/Dockerfile.testenv-pypi .
-    - docker push "$PYPI_IMAGE_TAG"
+    - docker buildx build --push -t "$PYPI_IMAGE_TAG" -f docker/Dockerfile.testenv-pypi .
 
 # LinOTP builds three images: the main image from Dockerfile.linotp plus
 # the testenv and testimg images, which derive from it via BASE_IMAGE.
@@ -275,35 +274,34 @@ semgrep-sast_evaluation:
     - docker pull debian:$DEBIAN_RELEASE_NAME
     - docker pull $BUILDER_CACHE_IMAGE:$BUILDER_CACHE_KEY || true
     - docker pull $LINOTP_CACHE_IMAGE:$LINOTP_CACHE_KEY || true
-    # Build the images
-    - *docker-build-args
-    - >
-      make
-      docker-build-linotp-builder
-      docker-build-linotp
-      docker-build-linotp-test-image
-      docker-build-linotp-softhsm
-      BUILDDIR="${CI_PROJECT_DIR}"
-      DOCKER_BUILD_ARGS="${DOCKER_BUILD_ARGS}"
-    # Tag and push images to repository in the form:
+    # Build the images and push them straight to the registry in the same
+    # buildx invocation (registry tags in the form:
     #  registry/ci/release/linotp-IMAGENAME:pipelineID
     #  registry/ci/release/linotp-IMAGENAME:sha256
-    # First for linotp-builder
-    - docker tag linotp-builder:latest "$BUILDER_CACHE_IMAGE:$BUILDER_CACHE_KEY"
-    - docker tag linotp-builder:latest "$BUILDER_CACHE_IMAGE:$CI_PIPELINE_ID"
-    - docker push "$BUILDER_CACHE_IMAGE:$BUILDER_CACHE_KEY"
-    - docker push "$BUILDER_CACHE_IMAGE:$CI_PIPELINE_ID"
-    # Now do the same for linotp
-    - docker tag linotp:latest "$LINOTP_CACHE_IMAGE:$LINOTP_CACHE_KEY"
-    - docker tag linotp:latest "$LINOTP_CACHE_IMAGE:$CI_PIPELINE_ID"
-    - docker push "$LINOTP_CACHE_IMAGE:$LINOTP_CACHE_KEY"
-    - docker push "$LINOTP_CACHE_IMAGE:$CI_PIPELINE_ID"
-    # Now we push the testenv and softhsm images. We do not bother to cache
-    # this because they change every time we do a new linotp build.
-    - docker tag linotp-testenv:latest "$TESTENV_DEB_IMAGE:$CI_PIPELINE_ID"
-    - docker push "$TESTENV_DEB_IMAGE:$CI_PIPELINE_ID"
-    - docker tag linotp-softhsm:latest "$SOFTHSM_DEB_IMAGE:$CI_PIPELINE_ID"
-    - docker push "$SOFTHSM_DEB_IMAGE:$CI_PIPELINE_ID"
+    # )
+    - *docker-build-args
+    - >
+      make docker-build-linotp-builder
+      BUILDDIR="${CI_PROJECT_DIR}"
+      DOCKER_BUILD_ARGS="${DOCKER_BUILD_ARGS} --push"
+      DOCKER_REGISTRY_TAGS="$BUILDER_CACHE_IMAGE:$BUILDER_CACHE_KEY $BUILDER_CACHE_IMAGE:$CI_PIPELINE_ID"
+    - >
+      make docker-build-linotp
+      BUILDDIR="${CI_PROJECT_DIR}"
+      DOCKER_BUILD_ARGS="${DOCKER_BUILD_ARGS} --push"
+      DOCKER_REGISTRY_TAGS="$LINOTP_CACHE_IMAGE:$LINOTP_CACHE_KEY $LINOTP_CACHE_IMAGE:$CI_PIPELINE_ID"
+    # We do not bother to cache the testenv and softhsm images because they
+    # change every time we do a new linotp build.
+    - >
+      make docker-build-linotp-test-image
+      BUILDDIR="${CI_PROJECT_DIR}"
+      DOCKER_BUILD_ARGS="${DOCKER_BUILD_ARGS} --push"
+      DOCKER_REGISTRY_TAGS="$TESTENV_DEB_IMAGE:$CI_PIPELINE_ID"
+    - >
+      make docker-build-linotp-softhsm
+      BUILDDIR="${CI_PROJECT_DIR}"
+      DOCKER_BUILD_ARGS="${DOCKER_BUILD_ARGS} --push"
+      DOCKER_REGISTRY_TAGS="$SOFTHSM_DEB_IMAGE:$CI_PIPELINE_ID"
     # Log all the images to stdout
     - docker images
     # Save build job id to artifacts for later uploads

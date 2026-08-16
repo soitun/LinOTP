@@ -228,7 +228,7 @@ DOCKER_EXTRA_BUILD_ARGS= --build-arg=http_proxy \
 #  make docker-run-linotp-sqlite DOCKER_RUN_ARGS='-p 1234:80'
 DOCKER_RUN_ARGS=
 
-DOCKER_BUILD = docker build $(DOCKER_BUILD_ARGS) $(DOCKER_EXTRA_BUILD_ARGS)
+DOCKER_BUILD = docker buildx build $(DOCKER_BUILD_ARGS) $(DOCKER_EXTRA_BUILD_ARGS)
 DOCKER_RUN = docker run $(DOCKER_RUN_ARGS)
 
 TESTS_DIR=linotp/tests
@@ -260,6 +260,14 @@ docker-pylint: docker-run-linotp-pylint
 # This is expanded during build to add image tags
 DOCKER_TAG_ARGS=$(foreach tag,$(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag))
 
+# Full "repo:tag" references (e.g. a registry cache image) to additionally
+# tag the build with. Unlike DOCKER_TAGS/DOCKER_TAG_ARGS above, these are not
+# prefixed with DOCKER_IMAGE, so they can point at a different image name -
+# typically a registry path. Combine with DOCKER_BUILD_ARGS+=--push to build
+# and push in a single buildx invocation.
+DOCKER_REGISTRY_TAGS=
+DOCKER_REGISTRY_TAG_ARGS=$(foreach tag,$(DOCKER_REGISTRY_TAGS),-t $(tag))
+
 # The linotp builder container contains all build dependencies
 # needed to build linotp, plus a copy of the linotp
 # sources under /pkg/linotp
@@ -272,6 +280,7 @@ docker-build-linotp-builder:
 	$(DOCKER_BUILD) \
 		-f docker/Dockerfile.builder-deb \
 		$(DOCKER_TAG_ARGS) \
+		$(DOCKER_REGISTRY_TAG_ARGS) \
 		-t $(DOCKER_IMAGE) \
 		.
 
@@ -332,6 +341,7 @@ docker-build-linotp: $(BUILDDIR)/dockerfy $(BUILDDIR)/apt/Packages
 
 	$(DOCKER_BUILD) \
 		$(DOCKER_TAG_ARGS) \
+		$(DOCKER_REGISTRY_TAG_ARGS) \
 		-t $(DOCKER_IMAGE) \
 		$(DOCKER_BUILDDIR)
 
@@ -346,6 +356,7 @@ docker-build-linotp-test-image:
 	cd $(TESTS_DIR) \
 	&& $(DOCKER_BUILD) \
 		$(DOCKER_TAG_ARGS) \
+		$(DOCKER_REGISTRY_TAG_ARGS) \
 		-t $(DOCKER_IMAGE) .
 
 # Build Softhsm test container
@@ -356,6 +367,7 @@ docker-build-linotp-softhsm:
 	cd $(SELENIUM_TESTS_DIR) \
 	&& $(DOCKER_BUILD) \
 		$(DOCKER_TAG_ARGS) \
+		$(DOCKER_REGISTRY_TAG_ARGS) \
 		-f Dockerfile.softhsm \
 		-t $(DOCKER_IMAGE) .
 
