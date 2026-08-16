@@ -260,13 +260,30 @@ docker-pylint: docker-run-linotp-pylint
 # This is expanded during build to add image tags
 DOCKER_TAG_ARGS=$(foreach tag,$(DOCKER_TAGS),-t $(DOCKER_IMAGE):$(tag))
 
-# Full "repo:tag" references (e.g. a registry cache image) to additionally
-# tag the build with. Unlike DOCKER_TAGS/DOCKER_TAG_ARGS above, these are not
-# prefixed with DOCKER_IMAGE, so they can point at a different image name -
-# typically a registry path. Combine with DOCKER_BUILD_ARGS+=--push to build
-# and push in a single buildx invocation.
+# Full "repo:tag" references (e.g. a registry cache image) to push the
+# build to, instead of (not in addition to) the local DOCKER_TAGS/-t
+# $(DOCKER_IMAGE) tag. `docker buildx build --push` pushes every -t tag
+# it's given, including bare/registry-less ones (which resolve to Docker
+# Hub and get rejected), so a build either goes to DOCKER_REGISTRY_TAGS
+# (pushed) or to the local bare tag (not pushed) - never both at once.
+# DOCKER_BUILD_TAG_ARGS below picks one or the other.
+#
+# --provenance false --sbom false: without these, --push turns even a
+# single-tag push into a multi-manifest index (image manifest + attestation
+# manifest), which is also how OCI media types silently drop a container's
+# HEALTHCHECK. Matches the canonical .build-image-buildx snippet in
+# dev/ext-project-packaging/ci-includes.
 DOCKER_REGISTRY_TAGS=
 DOCKER_REGISTRY_TAG_ARGS=$(foreach tag,$(DOCKER_REGISTRY_TAGS),-t $(tag))
+DOCKER_BUILD_TAG_ARGS=$(if $(DOCKER_REGISTRY_TAGS),$(DOCKER_REGISTRY_TAG_ARGS) --provenance false --sbom false --push,$(DOCKER_TAG_ARGS) -t $(DOCKER_IMAGE))
+
+# Image references other steps in this same job run/derive from - `docker
+# run $(BUILDER_IMAGE_REF)`, `FROM $(LINOTP_IMAGE_REF)`. Default to the
+# local bare tag for local/dev use; CI overrides these to whichever
+# registry-qualified tag it just pushed above, so a registry-pushing build
+# never needs a bare local tag loaded at all.
+BUILDER_IMAGE_REF=linotp-builder
+LINOTP_IMAGE_REF=linotp:latest
 
 # The linotp builder container contains all build dependencies
 # needed to build linotp, plus a copy of the linotp
@@ -279,9 +296,7 @@ docker-build-linotp-builder: DOCKER_IMAGE=linotp-builder
 docker-build-linotp-builder:
 	$(DOCKER_BUILD) \
 		-f docker/Dockerfile.builder-deb \
-		$(DOCKER_TAG_ARGS) \
-		$(DOCKER_REGISTRY_TAG_ARGS) \
-		-t $(DOCKER_IMAGE) \
+		$(DOCKER_BUILD_TAG_ARGS) \
 		.
 
 # A unique name to reference containers for this build
@@ -304,7 +319,7 @@ $(BUILDDIR)/apt/Packages:
 		--detach \
 		--rm \
 		--name $(DOCKER_CONTAINER_NAME)-apt \
-		linotp-builder \
+		$(BUILDER_IMAGE_REF) \
 		sleep 3600
 
 	docker cp . $(DOCKER_CONTAINER_NAME)-apt:/build
@@ -340,9 +355,7 @@ docker-build-linotp: $(BUILDDIR)/dockerfy $(BUILDDIR)/apt/Packages
 	find $(DOCKER_BUILDDIR)
 
 	$(DOCKER_BUILD) \
-		$(DOCKER_TAG_ARGS) \
-		$(DOCKER_REGISTRY_TAG_ARGS) \
-		-t $(DOCKER_IMAGE) \
+		$(DOCKER_BUILD_TAG_ARGS) \
 		$(DOCKER_BUILDDIR)
 
 # Build testing Docker Container
@@ -355,21 +368,18 @@ docker-build-linotp-test-image: DOCKER_IMAGE=linotp-testenv
 docker-build-linotp-test-image:
 	cd $(TESTS_DIR) \
 	&& $(DOCKER_BUILD) \
-		$(DOCKER_TAG_ARGS) \
-		$(DOCKER_REGISTRY_TAG_ARGS) \
-		-t $(DOCKER_IMAGE) .
+		--build-arg LINOTP_BASE_IMAGE=$(LINOTP_IMAGE_REF) \
+		$(DOCKER_BUILD_TAG_ARGS) .
 
 # Build Softhsm test container
 .PHONY: docker-build-linotp-softhsm
 docker-build-linotp-softhsm: DOCKER_IMAGE=linotp-softhsm
-docker-build-linotp-softhsm: BASE_IMAGE=linotp:latest
 docker-build-linotp-softhsm:
 	cd $(SELENIUM_TESTS_DIR) \
 	&& $(DOCKER_BUILD) \
-		$(DOCKER_TAG_ARGS) \
-		$(DOCKER_REGISTRY_TAG_ARGS) \
 		-f Dockerfile.softhsm \
-		-t $(DOCKER_IMAGE) .
+		--build-arg SOFTHSM_BASE_IMAGE=$(LINOTP_IMAGE_REF) \
+		$(DOCKER_BUILD_TAG_ARGS) .
 
 # Build packaging test container
 .PHONY: docker-build-packagetest

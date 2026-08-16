@@ -1,4 +1,5 @@
-FROM linotp
+ARG LINOTP_BASE_IMAGE=linotp
+FROM $LINOTP_BASE_IMAGE
 
 #
 # Docker-Image >> linotp-testenv <<
