@@ -66,6 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   addition to `navigator.id.getAssertion`. This is because no modern browser
   supports the FIDO U2F API, and we need to make do with FIDO2 instead.
 - Controllers log unknown Exceptions with Stacktrace for better debugging.
+- `/monitoring/storageEncryption` now also ensures that decryption is operational: in
+  addition to checking that a new value gets encrypted before being stored, the check
+  decrypts it again and compares it with the original plaintext.
 
 ### Changed
 
