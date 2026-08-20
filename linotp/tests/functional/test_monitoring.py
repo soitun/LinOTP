@@ -29,6 +29,7 @@ import json
 import logging
 import os
 from datetime import datetime
+from unittest.mock import patch
 
 from freezegun import freeze_time
 
@@ -208,7 +209,7 @@ class TestMonitoringController(TestController):
         assert s_values.get("total users", -1) == 1, response
         assert s_values.get("active", -1) == 2, response
 
-    def test_token_status_combi(self):
+    def test_token_status_combination(self):
         self.create_token(serial="0021")
         self.create_token(serial="0022", user="root")
         self.create_token(serial="0023", realm="mydefrealm")
@@ -248,7 +249,7 @@ class TestMonitoringController(TestController):
         assert s_values.get("total", -1) == 5, response
         assert s_values.get("unassigned&inactive", -1) == 1, response
 
-    def test_token_status_silly_combi(self):
+    def test_token_status_silly_combination(self):
         requested_status = "assigned&unassigned"
 
         self.create_token(serial="0021")
@@ -392,7 +393,7 @@ class TestMonitoringController(TestController):
                 serial="0036", realm="myotherrealm", user="max2", active=False
             )
 
-            assingned_and_active = 1
+            assigned_and_active = 1
             # ------------------------------------------------------------- --
 
             # do the monitoring request and verify the result
@@ -401,7 +402,7 @@ class TestMonitoringController(TestController):
 
             value = response.json["result"]["value"]
             assert value["user-num"] == license_user_num, response
-            user_left = license_user_num - assingned_and_active
+            user_left = license_user_num - assigned_and_active
             assert value["user-left"] == user_left, response
 
     def test_token_based_license(self):
@@ -446,7 +447,7 @@ class TestMonitoringController(TestController):
                 active=False,
             )
 
-            assingned_and_active = 4
+            assigned_and_active = 4
 
             # ------------------------------------------------------------- --
 
@@ -456,11 +457,10 @@ class TestMonitoringController(TestController):
 
             value = response.json["result"]["value"]
             assert value["token-num"] == license_token_num, response
-            token_left = license_token_num - assingned_and_active
+            token_left = license_token_num - assigned_and_active
             assert value["token-left"] == token_left, response
 
     def test_check_encryption(self):
-        # do this test befor test_config
         response = self.make_monitoring_request("storageEncryption", params={})
         resp = json.loads(response.body)
         values = resp.get("result").get("value")
@@ -473,6 +473,38 @@ class TestMonitoringController(TestController):
         resp = json.loads(response.body)
         values = resp.get("result").get("value")
         assert values.get("encryption"), response
+
+    def test_check_encryption_decrypt_mismatch(self):
+        """
+        if the security module can encrypt but decrypts back to a value
+        that does not match the original plaintext, the roundtrip check
+        must report encryption=False instead of only comparing the
+        encrypted value against the plaintext
+        """
+        with patch(
+            "linotp.lib.security.default.DefaultSecurityModule.decryptPassword",
+            return_value=b"not-the-original-value",
+        ):
+            response = self.make_monitoring_request("storageEncryption", params={})
+
+        resp = json.loads(response.body)
+        values = resp.get("result").get("value")
+        assert values.get("encryption") is False, response
+
+    def test_check_encryption_decrypt_unreachable(self):
+        """
+        if the security module fails outright while decrypting, the
+        error must propagate as a monitoring error instead of being
+        reported as a successful check
+        """
+        with patch(
+            "linotp.lib.security.default.DefaultSecurityModule.decryptPassword",
+            side_effect=RuntimeError("hsm not reachable"),
+        ):
+            response = self.make_monitoring_request("storageEncryption", params={})
+
+        resp = json.loads(response.body)
+        assert not resp.get("result").get("status"), response
 
     def test_userinfo(self):
         response = self.make_monitoring_request("userinfo", params={})

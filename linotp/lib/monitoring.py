@@ -125,17 +125,17 @@ class MonitorHandler:
             conditions = (and_(r_condition),)
             # handle combinations like:
             # status=unassigned & active, unassigned & inactive
-            for stati in stat.split("&"):
-                if stati == "assigned":
+            for single_status in stat.split("&"):
+                if single_status == "assigned":
                     conditions += (and_(Token.LinOtpUserid != ""),)
-                elif stati == "unassigned":
+                elif single_status == "unassigned":
                     conditions += (and_(Token.LinOtpUserid == ""),)
-                elif stati == "active":
+                elif single_status == "active":
                     conditions += (and_(Token.LinOtpIsactive),)
-                elif stati == "inactive":
+                elif single_status == "inactive":
                     conditions += (and_(Token.LinOtpIsactive == False),)  # noqa: E712
                 else:
-                    msg = f"Unknown token_status {stati!r}"
+                    msg = f"Unknown token_status {single_status!r}"
                     raise ValueError(msg)
 
             #  create the final condition as AND of all conditions
@@ -194,7 +194,7 @@ class MonitorHandler:
         # the number of config entries
         result["total"] = config_model.query.count()
 
-        # the number of resolver defintions
+        # the number of resolver definitions
         ldap = config_model.query.filter(
             config_model.Key.like("linotp.ldapresolver.%")
         ).count()
@@ -254,9 +254,17 @@ class MonitorHandler:
 
         new_value_enc = getFromConfig(test_key, defVal=None)
 
+        new_value_dec = new_value_enc.get_unencrypted() if new_value_enc else None
+
         # if new_value_enc != old_value: something new was written into db
         # if new_value_enc != new_value_plain: the new value got encrypted
-        return bool(new_value_enc and new_value_plain != new_value_enc != old_value)
+        # if new_value_dec == new_value_plain: the new value got decrypted
+        # back to its original plaintext, proving the full roundtrip
+        return bool(
+            new_value_enc
+            and new_value_plain != new_value_enc != old_value
+            and new_value_dec == new_value_plain
+        )
 
     def resolverinfo(self, realm):
         """
@@ -331,7 +339,7 @@ class MonitorHandler:
         for all resolvers which are in allowed realms
 
         users are counted per resolver, so if resolver is in more than one
-        realm, its uers will only be counted once
+        realm, its users will only be counted once
 
         :param realmlist: list of (existing and allowed) realms
         :return: number of users in allowed realms who own an active token

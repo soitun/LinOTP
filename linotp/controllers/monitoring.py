@@ -37,11 +37,7 @@ from linotp.lib import deprecated_methods
 from linotp.lib.context import request_context
 from linotp.lib.error import HSMException
 from linotp.lib.monitoring import MonitorHandler
-from linotp.lib.policy import (
-    PolicyException,
-    checkAuthorisation,
-    getAdminPolicies,
-)
+from linotp.lib.policy import PolicyException, checkAuthorisation, getAdminPolicies
 from linotp.lib.realm import match_realms
 from linotp.lib.reply import sendError, sendResult
 from linotp.lib.support import (
@@ -228,11 +224,12 @@ class MonitoringController(BaseController):
         check if hsm/enckey encrypts value before storing it to config db
 
         :return:
-            a json result with true if a new value gets encryptet before beeing stored in db
+            a json result with true if a new value gets encrypted before being stored in db
 
         :raises Exception:
             if an error occurs an exception is serialized and returned
         """
+
         try:
             if hasattr(c, "hsm") is False or isinstance(c.hsm, dict) is False:
                 msg = "no hsm defined in execution context!"
@@ -372,8 +369,8 @@ class MonitoringController(BaseController):
         per resolver
         the 'total' gives the number of all users, which are in an allowed
         realm and own an active token
-        users are conted per resolver (not per realm), so if resolver is in
-        multiple realms and one user ons tokens in 2 realms, the user will
+        users are counted per resolver (not per realm), so if resolver is in
+        multiple realms and one user owns tokens in 2 realms, the user will
         be counted only once
 
         :param realms: (optional) takes realms, only information on these realms
@@ -385,11 +382,12 @@ class MonitoringController(BaseController):
         :raises Exception:
             if an error occurs an exception is serialized and returned
         """
+
         result = {}
         try:
             request_realms = self.request_params.get("realms", "").split(",")
 
-            monit_handl = MonitorHandler()
+            monit_handler = MonitorHandler()
 
             policies = getAdminPolicies("activeUsers", scope="monitoring")
 
@@ -404,11 +402,11 @@ class MonitoringController(BaseController):
             realms = match_realms(request_realms, realm_whitelist)
 
             realm_info = {
-                realm: monit_handl.active_users_per_realm(realm) for realm in realms
+                realm: monit_handler.active_users_per_realm(realm) for realm in realms
             }
 
             result["Realms"] = realm_info
-            result["total"] = monit_handl.active_users_total(realms)
+            result["total"] = monit_handler.active_users_total(realms)
 
             return sendResult(result)
 
