@@ -278,34 +278,32 @@ class TokenView(ManageTab):
         )
 
         # Some rows do not contain all elements
-        self.testcase.disableImplicitWait()
-
-        for row in rows:
-            tds = row.find_elements(By.CSS_SELECTOR, "td.tokeninfoOuterTable")
-            key = tds[0].text
-            value_element = tds[1]
-            if key in keys_with_subtable:
-                inner_rows = value_element.find_elements(
-                    By.CSS_SELECTOR, "table.tokeninfoInnerTable tr"
-                )
-                if key == "LinOtp.RealmNames":
-                    token_info[key] = []
-                else:
-                    token_info[key] = {}
-                for inner_row in inner_rows:
-                    inner_tds = inner_row.find_elements(
-                        By.CSS_SELECTOR, "td.tokeninfoInnerTable"
+        with self.testcase.implicit_wait_disabled():
+            for row in rows:
+                tds = row.find_elements(By.CSS_SELECTOR, "td.tokeninfoOuterTable")
+                key = tds[0].text
+                value_element = tds[1]
+                if key in keys_with_subtable:
+                    inner_rows = value_element.find_elements(
+                        By.CSS_SELECTOR, "table.tokeninfoInnerTable tr"
                     )
                     if key == "LinOtp.RealmNames":
-                        inner_value = inner_tds[0].text
-                        token_info[key].append(inner_value)
+                        token_info[key] = []
                     else:
-                        inner_key = inner_tds[0].text
-                        inner_value = inner_tds[1].text
-                        token_info[key][inner_key] = inner_value
-            else:
-                token_info[key] = value_element.text
-        self.testcase.enableImplicitWait()
+                        token_info[key] = {}
+                    for inner_row in inner_rows:
+                        inner_tds = inner_row.find_elements(
+                            By.CSS_SELECTOR, "td.tokeninfoInnerTable"
+                        )
+                        if key == "LinOtp.RealmNames":
+                            inner_value = inner_tds[0].text
+                            token_info[key].append(inner_value)
+                        else:
+                            inner_key = inner_tds[0].text
+                            inner_value = inner_tds[1].text
+                            token_info[key][inner_key] = inner_value
+                else:
+                    token_info[key] = value_element.text
 
         self.driver.find_element(By.ID, "button_ti_close").click()
         return token_info

@@ -158,9 +158,10 @@ class ManageUi:
         """
         # close a potential welcome screen
         self.welcome_screen.close_if_open()
-        return (
-            self.is_tabs_visible(wait, raise_error=raise_error)
-            and self.is_url_correct()
+        # check the url first, so that we do not wait for the tabs of a page
+        # which can not be the manage ui at all
+        return self.is_url_correct() and self.is_tabs_visible(
+            wait, raise_error=raise_error
         )
 
     def is_login_open(self) -> bool:
@@ -235,14 +236,23 @@ class ManageUi:
 
     def open_manage(self) -> None:
         """Opens the manage ui page if it is not open and logs in if needed"""
-        if not self.is_manage_open():
+        wait = self.testcase.ui_wait_time
+
+        if not self.is_manage_open(wait):
             self.driver.get(self.manage_url)
+            # The manage page is rendered by javascript and we may end up
+            # being redirected to the login route, so wait until we can tell
+            # which of the two we got before deciding what to do next.
+            WebDriverWait(self.driver, wait).until(
+                lambda _: self.is_login_open() or self.is_tabs_visible(),
+                message="Neither the manage ui nor the login page showed up",
+            )
 
         if self.is_login_open():
             self.login()
 
         self.welcome_screen.close_if_open()
-        assert self.is_manage_open(), "ManageUi is not open"
+        assert self.is_manage_open(wait), "ManageUi is not open"
 
     def login(self) -> None:
         self.driver.get(self.manage_url)
@@ -401,12 +411,10 @@ class ManageUi:
             return False
 
         try:
-            self.testcase.disableImplicitWait()
-            element = EC.visibility_of_element_located((By.CSS_SELECTOR, css))(
-                self.driver
-            )
-
-            self.testcase.enableImplicitWait()
+            with self.testcase.implicit_wait_disabled():
+                element = EC.visibility_of_element_located((By.CSS_SELECTOR, css))(
+                    self.driver
+                )
         except NoSuchElementException:
             return False
         is_visible = element is not False
