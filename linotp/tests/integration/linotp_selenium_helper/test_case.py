@@ -243,8 +243,10 @@ class TestCase:
     def implicit_wait_disabled(self):
         "Disable implicit wait for the statements in the context manager"
         self.disableImplicitWait()
-        yield
-        self.enableImplicitWait()
+        try:
+            yield
+        finally:
+            self.enableImplicitWait()
 
     def find_children_by_id(self, parent_id, element_type="*"):
         """

@@ -158,6 +158,9 @@ class ManageUi:
         """
         # close a potential welcome screen
         self.welcome_screen.close_if_open()
+        # Note: the tabs are waited for first on purpose. We may still be
+        # navigating towards the manage url (e.g. right after submitting the
+        # login form), and that redirect happens while we wait for the tabs.
         return (
             self.is_tabs_visible(wait, raise_error=raise_error)
             and self.is_url_correct()
@@ -193,7 +196,8 @@ class ManageUi:
         Check we are on the right page
         """
         assert self.is_manage_open(wait, raise_error=True), (
-            f"Current URL: {self.URL} \n 'Tabs' visible: {self.is_tabs_visible()}"
+            f"Current URL: {self.driver.current_url} (expected: {self.URL}) \n"
+            f" 'Tabs' visible: {self.is_tabs_visible()}"
         )
 
         assert self.driver.title == "Management - LinOTP"
@@ -235,14 +239,23 @@ class ManageUi:
 
     def open_manage(self) -> None:
         """Opens the manage ui page if it is not open and logs in if needed"""
+        wait = self.testcase.ui_wait_time
+
         if not self.is_manage_open():
             self.driver.get(self.manage_url)
+            # The manage page is rendered by javascript and we may end up
+            # being redirected to the login route, so wait until we can tell
+            # which of the two we got before deciding what to do next.
+            WebDriverWait(self.driver, wait).until(
+                lambda _: self.is_login_open() or self.is_tabs_visible(),
+                message="Neither the manage ui nor the login page showed up",
+            )
 
         if self.is_login_open():
             self.login()
 
         self.welcome_screen.close_if_open()
-        assert self.is_manage_open(), "ManageUi is not open"
+        assert self.is_manage_open(wait), "ManageUi is not open"
 
     def login(self) -> None:
         self.driver.get(self.manage_url)
@@ -401,12 +414,10 @@ class ManageUi:
             return False
 
         try:
-            self.testcase.disableImplicitWait()
-            element = EC.visibility_of_element_located((By.CSS_SELECTOR, css))(
-                self.driver
-            )
-
-            self.testcase.enableImplicitWait()
+            with self.testcase.implicit_wait_disabled():
+                element = EC.visibility_of_element_located((By.CSS_SELECTOR, css))(
+                    self.driver
+                )
         except NoSuchElementException:
             return False
         is_visible = element is not False

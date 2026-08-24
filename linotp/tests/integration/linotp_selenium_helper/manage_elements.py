@@ -131,16 +131,17 @@ class ManageTab(ManageElement):
         # While the flexigrid is reloading the tokens, the reload button is set with class 'loading'.
         # Wait for this to disappear
         flexigrid_reloading_css = self.CSS_FLEXIGRID_RELOAD + ".loading"
-        self.testcase.disableImplicitWait()
 
-        WebDriverWait(
-            self.driver,
-            self.testcase.backend_wait_time,
-            ignored_exceptions=NoSuchElementException,
-        ).until_not(
-            EC.presence_of_element_located((By.CSS_SELECTOR, flexigrid_reloading_css))
-        )
-        self.testcase.enableImplicitWait()
+        with self.testcase.implicit_wait_disabled():
+            WebDriverWait(
+                self.driver,
+                self.testcase.backend_wait_time,
+                ignored_exceptions=NoSuchElementException,
+            ).until_not(
+                EC.presence_of_element_located(
+                    (By.CSS_SELECTOR, flexigrid_reloading_css)
+                )
+            )
 
     def open_tab(self):
         """
