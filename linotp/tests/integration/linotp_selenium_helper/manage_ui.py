@@ -158,10 +158,12 @@ class ManageUi:
         """
         # close a potential welcome screen
         self.welcome_screen.close_if_open()
-        # check the url first, so that we do not wait for the tabs of a page
-        # which can not be the manage ui at all
-        return self.is_url_correct() and self.is_tabs_visible(
-            wait, raise_error=raise_error
+        # Note: the tabs are waited for first on purpose. We may still be
+        # navigating towards the manage url (e.g. right after submitting the
+        # login form), and that redirect happens while we wait for the tabs.
+        return (
+            self.is_tabs_visible(wait, raise_error=raise_error)
+            and self.is_url_correct()
         )
 
     def is_login_open(self) -> bool:
@@ -194,7 +196,8 @@ class ManageUi:
         Check we are on the right page
         """
         assert self.is_manage_open(wait, raise_error=True), (
-            f"Current URL: {self.URL} \n 'Tabs' visible: {self.is_tabs_visible()}"
+            f"Current URL: {self.driver.current_url} (expected: {self.URL}) \n"
+            f" 'Tabs' visible: {self.is_tabs_visible()}"
         )
 
         assert self.driver.title == "Management - LinOTP"
@@ -238,7 +241,7 @@ class ManageUi:
         """Opens the manage ui page if it is not open and logs in if needed"""
         wait = self.testcase.ui_wait_time
 
-        if not self.is_manage_open(wait):
+        if not self.is_manage_open():
             self.driver.get(self.manage_url)
             # The manage page is rendered by javascript and we may end up
             # being redirected to the login route, so wait until we can tell
