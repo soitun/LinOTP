@@ -2019,7 +2019,7 @@ class UserserviceController(BaseController):
 
                 if isinstance(token, ForwardTokenClass):
                     # get the target token info.
-                    target_token_info = token._get_target_info()
+                    target_token_info = token.get_target_info()
 
                     # and add info about this token to the detail
                     detail_response.update(target_token_info)
