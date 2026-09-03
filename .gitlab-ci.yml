@@ -204,6 +204,9 @@ pre-commit-check:
   image: ghcr.io/astral-sh/uv:python3.11-bookworm
   interruptible: true
   cache:
+    key:
+      files:
+        - .pre-commit-config.yaml
     paths:
       - $CI_PROJECT_DIR/.pre-commit-cache
   rules:
