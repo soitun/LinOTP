@@ -204,12 +204,17 @@ pre-commit-check:
   image: ghcr.io/astral-sh/uv:python3.11-bookworm
   interruptible: true
   cache:
+    key:
+      files:
+        - .pre-commit-config.yaml
     paths:
       - $CI_PROJECT_DIR/.pre-commit-cache
   rules:
     - exists:
         - .pre-commit-config.yaml
   before_script:
+    - echo -e >$HOME/.netrc "machine gitbox.corp.linotp.de\nlogin __token__\npassword $GITHUB_REPO_CLONE_TOKEN"
+    - chmod 600 $HOME/.netrc
     - uv tool install pre-commit --with pre-commit-uv --force-reinstall
   script:
     - PRE_COMMIT_HOME=$CI_PROJECT_DIR/.pre-commit-cache uvx pre-commit run --all-files
