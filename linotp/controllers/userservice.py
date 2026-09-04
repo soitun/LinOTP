@@ -2347,8 +2347,8 @@ class UserserviceController(BaseController):
         :param serial: a suggested serial number
         :param prefix: a prefix for the serial number
         :param description: an optional description for the token
-        :param pin: the pin for the token (policy: setOTPPIN)
-        :param otppin: motpPin for mOTP Tokens (policy: setMOTPPIN)
+        :param pin: the token pin (policy ``setOTPPIN`` makes ``pin`` required or prohibited)
+        :param otppin: the mOTP PIN, required parameter for mOTP tokens
 
         :return:
             a json result with a boolean status and request result
@@ -2357,6 +2357,7 @@ class UserserviceController(BaseController):
             if an error occurs an exception is serialized and returned
 
         """
+
         response_detail = {}
         param = self.request_params.copy()
 
