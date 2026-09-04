@@ -4742,9 +4742,7 @@ $(document).ready(function () {
     $dialog_tools_checkpolicy = create_tools_checkpolicy_dialog();
     $('#menu_tools_checkpolicy').click(function () {
         $dialog_tools_checkpolicy.dialog('open');
-        $('#cp_allowed').hide();
-        $('#cp_forbidden').hide();
-        $('#cp_policy').html("");
+        reset_check_policy_result();
     });
 
     var $dialog_tools_exporttoken = create_tools_exporttoken_dialog();

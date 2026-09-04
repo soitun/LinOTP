@@ -1186,6 +1186,10 @@
     <hr>
     <div id="cp_allowed">${_("This action is allowed by the following policy:")}</div>
     <div id="cp_forbidden">${_("This action is not allowed by any policy!")}</div>
+    <div id="cp_error" class="error_box">
+        <div>${_("Policies could not be checked.")}</div>
+        <div id="cp_error_reason"></div>
+    </div>
     <div><pre id="cp_policy"> </pre></div>
     </form>
 </div>

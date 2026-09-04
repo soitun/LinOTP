@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Offline mode support for FIDO2 tokens.
 - unhandled errors are now logged with traceback and returned in the response
 - Manage-UI shows info-box (success/error) for operation `Set PIN`
+- The *Check Policy* dialog in the Manage-UI tells the administrator why a check could not be answered, e.g. when the request was rejected or the server did not respond
 - Caching of UserInfo per request to decrease request time of e.g. `/validate/check` to about half
 - a new `setOCRAPIN` admin policy is introduced that works exactly like `setMOTPPIN` and can only be used for ocra2 tokens
 - Activation challenges for QR and Push tokens can be triggered by users via `/userservice/activate_init`.

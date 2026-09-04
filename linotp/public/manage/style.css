@@ -849,3 +849,9 @@ div#dialog_setexpiration p, div#dialog_setexpiration div {
   opacity: 0;
   visibility: hidden;
 }
+
+/* the reason why a policy check failed, below the message and possibly long */
+#cp_error_reason:not(:empty) {
+  margin-top: 0.3em;
+  overflow-wrap: anywhere;
+}
