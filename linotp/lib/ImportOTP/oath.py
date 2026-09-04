@@ -39,7 +39,7 @@ def parseOATHcsv(csv):
     The file format is
 
         serial, key, [hotp,totp], [6,8], [30|60], [sha1|sha256|sha512],
-        serial, key, ocra, [ocra-suite]
+        serial, key, ocra2, [ocra-suite]
 
     It imports standard hmac algorithm based tokens
 
@@ -52,7 +52,7 @@ def parseOATHcsv(csv):
     * The default is hotp
     * if totp is set, the default seconds are 30
 
-    * if ocra is set, an ocra-suite is required
+    * if ocra2 is set, an ocra-suite is required
 
     It returns a dictionary:
         {
@@ -117,20 +117,17 @@ def parseOATHcsv(csv):
 
         # 3 column: token type
 
-        ttype = line[2].lower()
-        if ttype == "hotp":
-            ttype = "hmac"
+        token_type = line[2].lower() or "hmac"  # default type is hmac
+        if token_type == "hotp":
+            token_type = "hmac"
 
-        if not ttype:
-            ttype = "hmac"
-
-        token["type"] = ttype
+        token["type"] = token_type
 
         # ------------------------------------------------------------------ --
 
         # 4 column: otplen or ocrasuite
 
-        if ttype in ["ocra2"]:
+        if token_type == "ocra2":
             ocrasuite = line[3]
 
             if not ocrasuite:
@@ -153,7 +150,7 @@ def parseOATHcsv(csv):
 
         # 5 column: timeStep
 
-        if ttype in ["totp"]:
+        if token_type == "totp":
             try:
                 seconds = int(line[4])
             except ValueError:
@@ -175,7 +172,7 @@ def parseOATHcsv(csv):
         else:
             hashlib = "sha1"
 
-        if ttype not in ["ocra", "ocra2"]:
+        if token_type != "ocra2":
             token["hashlib"] = hashlib
 
         # ------------------------------------------------------------------ --

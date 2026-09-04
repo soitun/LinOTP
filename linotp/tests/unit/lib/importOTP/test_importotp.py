@@ -76,6 +76,11 @@ class TestCacheActivation(unittest.TestCase):
 
         assert TOKENS["tok3"].get("otplen") == 8, TOKENS
 
+        # an omitted type column and the csv spelling 'hotp' both mean hmac
+        assert TOKENS["tok1"].get("type") == "hmac", TOKENS
+        assert TOKENS["tok3"].get("type") == "hmac", TOKENS
+        assert TOKENS["tok2"].get("type") == "totp", TOKENS
+
     def test_parse_OATH_256(self):
         """
         Test the OATH csv import for sha256 tokens

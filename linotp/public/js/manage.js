@@ -1602,47 +1602,28 @@ function token_enroll() {
     // dynamic tokens might overwrite this description
     params['description'] = 'webGUI_generated';
 
-    /* switch can be removed by default, if token migration is completed*/
+    if (typ in $tokentypes) {  /*
+        * the dynamic tokens must provide a function to gather all data from the form
+        */
+        var params = {};
+        var functionString = typ + '_get_enroll_params';
+        var funct = window[functionString];
+        var exi = typeof funct;
 
-    switch (typ) {
-        case 'ocra':
-            params['sharedsecret'] = 1;
-            // If we got to generate the hmac key, we do it here:
-            if ($('#ocra_key_cb').is(':checked')) {
-                params['genkey'] = 1;
-            } else {
-                // OTP Key
-                params['otpkey'] = $('#ocra_key').val();
-            }
-            if ($('#ocra_pin1').val() != '') {
-                params['pin'] = $('#ocra_pin1').val();
-            }
-            break;
-
-        default:
-            if (typ in $tokentypes) {  /*
-                * the dynamic tokens must provide a function to gather all data from the form
-                */
-                var params = {};
-                var functionString = typ + '_get_enroll_params';
-                var funct = window[functionString];
-                var exi = typeof funct;
-
-                if (exi == 'undefined') {
-                    alert('undefined function ' + escape(functionString) +
-                        ' for tokentype ' + escape(typ));
-                }
-                if (exi == 'function') {
-                    params = window[functionString]();
-                }
-            } else {
-                alert_info_text({
-                    'text': "text_enroll_type_error",
-                    'type': ERROR,
-                    'is_escaped': true
-                });
-                return false;
-            }
+        if (exi == 'undefined') {
+            alert('undefined function ' + escape(functionString) +
+                ' for tokentype ' + escape(typ));
+        }
+        if (exi == 'function') {
+            params = window[functionString]();
+        }
+    } else {
+        alert_info_text({
+            'text': "text_enroll_type_error",
+            'type': ERROR,
+            'is_escaped': true
+        });
+        return false;
     }
     params['type'] = typ;
     if (params['genkey'] == 1 || typ == "qr") {
@@ -1682,27 +1663,25 @@ function tokentype_changed() {
         $('.token_enroll_frame').not('#token_enroll_' + $tokentype).removeClass('active-frame').hide();
         $('#token_enroll_' + $tokentype).addClass('active-frame').show();
 
-        if ($tokentype !== "ocra") {
-            var functionString = '' + $tokentype + '_enroll_setup_defaults';
-            var funct = window[functionString];
-            var exi = typeof funct;
+        var functionString = '' + $tokentype + '_enroll_setup_defaults';
+        var funct = window[functionString];
+        var exi = typeof funct;
 
-            if (exi == 'function') {
-                var rand_pin = 0;
-                var options = {};
-                var selected_users = get_selected_user();
-                if (selected_users.length == 1) {
-                    var policy_def = {
-                        'scope': 'enrollment',
-                        'action': 'otp_pin_random'
-                    };
-                    policy_def['realm'] = selected_users[0].realm;
-                    policy_def['user'] = selected_users[0].login;
-                    rand_pin = get_policy(policy_def).length;
-                    options = { 'otp_pin_random': rand_pin };
-                }
-                var l_params = window[functionString]($systemConfig, options);
+        if (exi == 'function') {
+            var rand_pin = 0;
+            var options = {};
+            var selected_users = get_selected_user();
+            if (selected_users.length == 1) {
+                var policy_def = {
+                    'scope': 'enrollment',
+                    'action': 'otp_pin_random'
+                };
+                policy_def['realm'] = selected_users[0].realm;
+                policy_def['user'] = selected_users[0].login;
+                rand_pin = get_policy(policy_def).length;
+                options = { 'otp_pin_random': rand_pin };
             }
+            var l_params = window[functionString]($systemConfig, options);
         }
 
         // enable visual pin validation and trigger it for the first time
