@@ -111,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `userservice/webprovision` endpoint is removed
 - `userservice/getmultiotp` endpoint is removed
 - Legacy selfservice user interface removed
+- Unsupported smartcard leftovers are removed that never went into production: the `sopin` parameter of `/admin/setPin` and the `setSCPIN` admin policy. An existing policy that lists `setSCPIN` has no effect and should be cleaned up, as saving it again fails the policy action validation
 
 ### Deprecated
 
