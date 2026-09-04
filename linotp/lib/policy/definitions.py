@@ -590,11 +590,6 @@ def validate_policy_definition(policy):
 
     scope = policy["scope"]
 
-    # for legacy ocra and ocra2 scope there is no validation as there
-    # is no clear action definition
-    if scope in ["ocra", "ocra2"]:
-        return
-
     actions = policy.get("action", {})
 
     # there are currently some known legacy definitions which are
@@ -692,8 +687,6 @@ def validate_policy_definition(policy):
                     value, scope, action, definition["range"]
                 )
                 raise Exception(msg)
-
-    return
 
 
 def convert_policy_value(value, value_type):
