@@ -1508,10 +1508,11 @@ class SystemController(BaseController):
                     if len(pol) > 0:
                         g.audit["info"] = f"allowed by policy {list(pol.keys())}"
                 else:
-                    # No policy active for this scope
-                    g.audit["info"] = f"allowed since no policies in scope {scope}"
                     res["allowed"] = True
-                    res["policy"] = f"No policies in scope {scope}"
+                    g.audit["info"] = res["policy"] = (
+                        f"access to scope {scope} is not restricted "
+                        "because it has no active policies"
+                    )
             else:
                 log.debug(
                     "[checkPolicy] checking policy for client %s, "
