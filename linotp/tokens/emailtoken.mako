@@ -90,12 +90,6 @@ function email_enroll_setup_defaults(config, options){
 	// in case we enroll e-mail otp, we get the e-mail address of the user
 	email_addresses = get_selected_email();
 	$('#email_address').val($.trim(email_addresses[0]));
-    var rand_pin = options['otp_pin_random'];
-    if (rand_pin > 0) {
-        $("[name='set_pin_rows']").hide();
-    } else {
-        $("[name='set_pin_rows']").show();
-    }
 }
 /*
  * 'typ'_get_enroll_params()
@@ -132,12 +126,12 @@ function email_clear_input_fields() {
     <td><label for="enroll_email_desc" id='enroll_email_desc_label'>${_("Description")}</label></td>
     <td><input type="text" name="enroll_email_desc" id="enroll_email_desc" value="webGUI_generated" class="text"></td>
 </tr>
-<tr name="set_pin_rows" class="space" title='${_("Protect your token with a static PIN")}'><th colspan="2">${_("Token PIN:")}</th></tr>
-<tr name='set_pin_rows'>
+<tr class="space set_pin_rows" title='${_("Protect your token with a static PIN")}'><th colspan="2">${_("Token PIN:")}</th></tr>
+<tr class="set_pin_rows">
     <td class="description"><label for="pin1" id="email_pin1_label">${_("Enter PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin1" id="email_pin1"
             class="text ui-widget-content ui-corner-all"></td>
-</tr><tr name='set_pin_rows'>
+</tr><tr class="set_pin_rows">
     <td class="description"><label for="pin2" id="email_pin2_label">${_("Confirm PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin2" id="email_pin2"
             class="text ui-widget-content ui-corner-all"></td>

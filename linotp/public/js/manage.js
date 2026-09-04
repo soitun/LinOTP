@@ -1663,25 +1663,27 @@ function tokentype_changed() {
         $('.token_enroll_frame').not('#token_enroll_' + $tokentype).removeClass('active-frame').hide();
         $('#token_enroll_' + $tokentype).addClass('active-frame').show();
 
-        var functionString = '' + $tokentype + '_enroll_setup_defaults';
-        var funct = window[functionString];
-        var exi = typeof funct;
+        var rand_pin = 0;
+        var options = {};
+        var selected_users = get_selected_user();
+        if (selected_users.length == 1) {
+            var policy_def = {
+                'scope': 'enrollment',
+                'action': 'otp_pin_random'
+            };
+            policy_def['realm'] = selected_users[0].realm;
+            policy_def['user'] = selected_users[0].login;
+            rand_pin = get_policy(policy_def).length;
+            options = { 'otp_pin_random': rand_pin };
+        }
 
-        if (exi == 'function') {
-            var rand_pin = 0;
-            var options = {};
-            var selected_users = get_selected_user();
-            if (selected_users.length == 1) {
-                var policy_def = {
-                    'scope': 'enrollment',
-                    'action': 'otp_pin_random'
-                };
-                policy_def['realm'] = selected_users[0].realm;
-                policy_def['user'] = selected_users[0].login;
-                rand_pin = get_policy(policy_def).length;
-                options = { 'otp_pin_random': rand_pin };
-            }
-            var l_params = window[functionString]($systemConfig, options);
+        // a random pin is assigned by policy, so the token pin fields of the
+        // token type are of no use - hide all '.set_pin_rows' elements.
+        $('.token_enroll_frame.active-frame .set_pin_rows').toggle(!rand_pin);
+
+        var functionString = "" + $tokentype + "_enroll_setup_defaults";
+        if (typeof window[functionString] == "function") {
+          window[functionString]($systemConfig, options);
         }
 
         // enable visual pin validation and trigger it for the first time

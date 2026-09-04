@@ -133,12 +133,6 @@ ${_("PushToken - challenge/response Token")}
  */
 function push_enroll_setup_defaults(config, options){
     push_clear_input_fields();
-
-    if (options['otp_pin_random'] > 0) {
-        $(".pushtoken_pin_rows").hide();
-    } else {
-        $(".pushtoken_pin_rows").show();
-    }
 }
 
 /*
@@ -182,12 +176,12 @@ function push_clear_input_fields() {
             <label for="pushtoken_pin1">${_("OTP Digits")}:</label>
         </td>
     </tr>
-    <tr class="space pushtoken_pin_rows">
+    <tr class="space set_pin_rows">
         <th colspan="2">
             ${_("Token PIN:")}
         </th>
     </tr>
-    <tr class="pushtoken_pin_rows">
+    <tr class="set_pin_rows">
         <td class="description">
             <label for="pushtoken_pin1">${_("Enter PIN")}:</label>
         </td>
@@ -195,7 +189,7 @@ function push_clear_input_fields() {
             <input type="password" autocomplete="off" onkeyup="checkpins('pushtoken_pin1','pushtoken_pin2');" name="pushtoken_pin1" id="pushtoken_pin1" class="text">
         </td>
     </tr>
-    <tr class="pushtoken_pin_rows">
+    <tr class="set_pin_rows">
         <td class="description">
             <label for="pushtoken_pin2">${_("Confirm PIN")}:</label>
         </td>

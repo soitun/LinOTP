@@ -140,12 +140,6 @@ ${_("YubiKey")}
  */
 function yubico_enroll_setup_defaults(config, options){
     yubico_clear_input_fields();
-    var rand_pin = options['otp_pin_random'];
-    if (rand_pin > 0) {
-        $("[name='set_pin_rows']").hide();
-    } else {
-        $("[name='set_pin_rows']").show();
-    }
 }
 /*
  * 'typ'_get_enroll_params()
@@ -192,13 +186,13 @@ function yubico_clear_input_fields() {
     <td><label for="yubico_enroll_desc" id='yubico_enroll_desc_label'>${_("Description")}</label></td>
     <td><input type="text" name="yubico_enroll_desc" id="yubico_enroll_desc" value="Yubico Cloud token" class="text"></td>
 </tr>
-<tr name="set_pin_rows" class="space" title='${_("Protect your token with a static PIN")}'><th colspan="2">${_("Token PIN:")}</th></tr>
-<tr name="set_pin_rows">
+<tr class="space set_pin_rows" title='${_("Protect your token with a static PIN")}'><th colspan="2">${_("Token PIN:")}</th></tr>
+<tr class="set_pin_rows">
     <td class="description"><label for="pin1" id="yubico_pin1_label">${_("Enter PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin1" id="yubico_pin1"
             class="text ui-widget-content ui-corner-all"></td>
 </tr>
-<tr name="set_pin_rows">
+<tr class="set_pin_rows">
     <td class="description"><label for="pin2" id="yubico_pin2_label">${_("Confirm PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin2" id="yubico_pin2"
             class="text ui-widget-content ui-corner-all"></td>

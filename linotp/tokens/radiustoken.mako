@@ -137,12 +137,6 @@ ${_("RADIUS token")}
  */
 function radius_enroll_setup_defaults(config, options){
     radius_clear_input_fields();
-    var rand_pin = options['otp_pin_random'];
-    if (rand_pin > 0) {
-        $("[name='set_pin_rows']").hide();
-    } else {
-        $("[name='set_pin_rows']").show();
-    }
 
     $('#radius_server').val(config['radius.server']);
     $('#radius_secret').val(config['radius.secret']);
@@ -245,15 +239,15 @@ $("#form_enroll_token").validate({
         <td><label for="radius_user">${_("RADIUS user")}</label></td>
         <td><input type="text" name="radius_user" id="radius_user" value="" class="text ui-widget-content ui-corner-all"></td>
     </tr>
-    <tr name="set_pin_rows" class="space" title='${_("Protect your token with a static PIN")}'>
+    <tr class="space set_pin_rows" title='${_("Protect your token with a static PIN")}'>
         <th colspan="2">${_("Token PIN:")}</th>
     </tr>
-    <tr name="set_pin_rows">
+    <tr class="set_pin_rows">
         <td class="description"><label for="pin1" id="radius_pin1_label">${_("Enter PIN")}:</label></td>
         <td><input type="password" autocomplete="off" name="pin1" id="radius_pin1"
                 class="text ui-widget-content ui-corner-all" /></td>
     </tr>
-    <tr name="set_pin_rows">
+    <tr class="set_pin_rows">
         <td class="description"><label for="pin2" id="radius_pin2_label">${_("Confirm PIN")}:</label></td>
         <td><input type="password" autocomplete="off" name="pin2" id="radius_pin2"
                 class="text ui-widget-content ui-corner-all"></td>
