@@ -850,8 +850,16 @@ div#dialog_setexpiration p, div#dialog_setexpiration div {
   visibility: hidden;
 }
 
-/* the reason why a policy check failed, below the message and possibly long */
-#cp_error_reason:not(:empty) {
-  margin-top: 0.3em;
+/* the check policy results: the reason why a check failed and the matching
+   policy. a long value, like an action list, has to wrap instead of
+   horizontally scrolling the dialog */
+#cp_error_reason:not(:empty),
+#cp_policy {
+  margin: 0.5em 0 0;
   overflow-wrap: anywhere;
+}
+
+/* the matching policy keeps its json indentation */
+#cp_policy {
+  white-space: pre-wrap;
 }

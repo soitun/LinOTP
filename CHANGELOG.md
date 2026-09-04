@@ -119,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The *Check Policy* dialog in the Manage-UI uses standard json formatting of the matching policy now: it is no longer broken apart at the commas inside a value, and long values wrap instead of horizontally scrolling the dialog.
 - filter audit trail by token type
 - Don't reject empty string as `pin` when `otp_pin_contents=+`
 - To set the motp pin via `/admin/setPin`, the admin policy `setMOTPPIN` is sufficient

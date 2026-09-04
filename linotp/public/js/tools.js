@@ -154,7 +154,7 @@ function checkPolicy(scope, realm, user, action, client) {
 
     if (obj.result.value.allowed) {
         $('#cp_allowed').show();
-        $('#cp_policy').text(JSON.stringify(obj.result.value.policy).replace(/,/g, ",\n").replace(/:\{/g, ":\{\n"));
+        $('#cp_policy').text(JSON.stringify(obj.result.value.policy, null, 2));
     } else {
         $('#cp_forbidden').show();
     }
