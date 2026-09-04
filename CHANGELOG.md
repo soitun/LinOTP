@@ -69,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/monitoring/storageEncryption` now also ensures that decryption is operational: in
   addition to checking that a new value gets encrypted before being stored, the check
   decrypts it again and compares it with the original plaintext.
+- Provide forwarded token description and type in userservice context allowing better depiction of the forwarded token.
 
 ### Changed
 

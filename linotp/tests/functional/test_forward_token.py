@@ -498,5 +498,46 @@ class TestForwardToken(TestController):
         validate_response = self.make_validate_request("check_t", params=params)
         assert "false" in validate_response, "invalid positive login"
 
+    def test_selfservice_usertokenlist_shows_target_token_info(self):
+        """
+        the selfservice token list should show the description and type
+        of the token a forward token points to, inside LinOtp.TokenInfo
+        """
+
+        user = "passthru_user1"
+        auth_user = (f"{user}@myDefRealm", "geheim1")
+
+        target_serial = "PwTarget"
+        params = {
+            "serial": target_serial,
+            "type": "pw",
+            "otpkey": "secret",
+            "pin": "321!",
+            "description": "Target Token",
+            "user": user,
+        }
+        response = self.make_admin_request("init", params=params)
+        assert '"value": true' in response, response
+
+        forward_serial = self.create_forward_token(target_serial, owner=user)
+
+        response = self.make_userservice_request(
+            "usertokenlist", params={}, auth_user=auth_user
+        )
+
+        jresp = json.loads(response.body)
+        tokens = jresp.get("result", {}).get("value", [])
+
+        forward_token = next(
+            tok
+            for tok in tokens
+            if tok.get("LinOtp.TokenSerialnumber") == forward_serial
+        )
+
+        token_info = forward_token.get("LinOtp.TokenInfo", {})
+        assert token_info.get("forward.serial") == target_serial
+        assert token_info.get("forward.description") == "Target Token"
+        assert token_info.get("forward.type") == "pw"
+
 
 # eof #########################################################################

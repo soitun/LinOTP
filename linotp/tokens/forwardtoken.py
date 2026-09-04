@@ -280,13 +280,13 @@ class ForwardTokenClass(TokenClass):
             # information about the forwarded token
             if attributes is None:
                 attributes = {}
-            attributes.update(self._get_target_info())
+            attributes.update(self.get_target_info())
 
             return success, message, data, attributes
 
         return (False, "", "", None)
 
-    def _get_target_info(self):
+    def get_target_info(self):
         """small helper to build response detail of the target token"""
 
         prefix = "linotp_forward_"
@@ -418,7 +418,7 @@ class ForwardTokenClass(TokenClass):
         """interface the offline capability of the target token"""
 
         offline_info = self.targetToken.getOfflineInfo() or {}
-        offline_info.update(self._get_target_info())
+        offline_info.update(self.get_target_info())
         return offline_info
 
     def statusValidationSuccess(self):

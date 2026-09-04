@@ -50,6 +50,7 @@ from linotp.lib.type_utils import DEFAULT_TIMEFORMAT as TIMEFORMAT
 from linotp.lib.type_utils import parse_duration
 from linotp.lib.user import User, get_userinfo, getRealmBox
 from linotp.lib.util import get_copyright_info, get_request_param, get_version
+from linotp.tokens.forwardtoken import ForwardTokenClass
 
 log = logging.getLogger(__name__)
 
@@ -81,6 +82,20 @@ def getTokenForUser(user, active=None, exclude_rollout=True):
             tok["LinOtp.TokenInfo"] = token_info
 
         tok["Enrollment"] = token.get_enrollment_status()
+
+        # Add forwarded token details if its a forward token
+        if isinstance(token, ForwardTokenClass) and token.targetToken is not None:
+            token_info = tok.get("LinOtp.TokenInfo")
+            if not isinstance(token_info, dict):
+                token_info = {}
+            target_info = token.get_target_info()
+            # The persisted forward token contains "forward.serial" in its tokeninfo
+            # so we would like to keep the naming consistent.
+            token_info["forward.description"] = target_info[
+                "linotp_forward_tokendescription"
+            ]
+            token_info["forward.type"] = target_info["linotp_forward_tokentype"]
+            tok["LinOtp.TokenInfo"] = token_info
 
         tokenArray.append(tok)
 
