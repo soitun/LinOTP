@@ -1182,7 +1182,6 @@ class AdminController(BaseController, JWTMixin):
 
             try:
                 userpin = param["userpin"]
-                g.audit["userpin"] = userpin
             except KeyError as exx:
                 msg = "Missing parameter: 'userpin'"
                 raise ParameterError(msg) from exx
