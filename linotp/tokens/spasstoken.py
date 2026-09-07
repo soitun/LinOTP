@@ -23,7 +23,7 @@
 #    Contact: www.linotp.org
 #    Support: www.linotp.de
 #
-"""This file containes the dynamic SPass token implementation:
+"""This file contains the dynamic SPass token implementation:
 - SpassTokenClass
 """
 

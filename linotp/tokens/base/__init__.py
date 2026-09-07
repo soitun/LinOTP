@@ -26,7 +26,7 @@
 
 
 """
-This file containes the standard token definitions:
+This file contains the standard token definitions:
 
 the base class "TokenClass", that you may use to
 define your own tokenclasses.

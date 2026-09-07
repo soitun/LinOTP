@@ -24,7 +24,7 @@
 #    Support: www.linotp.de
 #
 
-"""This file containes the dynamic sms token implementation:
+"""This file contains the dynamic sms token implementation:
           - SMSTokenClass (sms)
 
 the SMS Token is an challenge - response token, by the means, that there is
