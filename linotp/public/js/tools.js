@@ -111,29 +111,52 @@ function create_tools_copytokenpin_dialog() {
     return $dialog;
 }
 
-function checkPolicy(scope, realm, user, action, client) {
-    if ($("#form_check_policy").valid()) {
-        var param = {};
-        param["scope"] = scope;
-        param["realm"] = realm;
-        param["user"] = user;
-        param["action"] = action;
-        param["client"] = client;
-        var resp = clientUrlFetchSync('/system/checkPolicy', param, true);
-        var obj = jQuery.parseJSON(resp);
-        if (obj.result.status == true) {
-            if (obj.result.value.allowed) {
-                $('#cp_allowed').show();
-                $('#cp_forbidden').hide();
-                $('#cp_policy').html(JSON.stringify(obj.result.value.policy).replace(/,/g, ",\n").replace(/:\{/g, ":\{\n"));
-            } else {
-                $('#cp_allowed').hide();
-                $('#cp_forbidden').show();
-                $('#cp_policy').html("");
-            }
-        } else {
+/*
+ * reset the result area of the check policy dialog
+ */
+function reset_check_policy_result() {
+    $('#cp_allowed').hide();
+    $('#cp_forbidden').hide();
+    $('#cp_error').hide();
+    $('#cp_error_reason').text("");
+    $('#cp_policy').text("");
+}
 
+function checkPolicy(scope, realm, user, action, client) {
+    if (!$("#form_check_policy").valid()) {
+        return;
+    }
+
+    var param = {
+        'scope': scope,
+        'realm': realm,
+        'user': user,
+        'action': action,
+        'client': client,
+    };
+
+    reset_check_policy_result();
+
+    var obj = null;
+    try {
+        obj = jQuery.parseJSON(clientUrlFetchSync("/system/checkPolicy", param));
+    } catch (err) {
+        // no answer, or one that is not json: obj stays null
+    }
+
+    if (!obj?.result?.status) {
+        if (obj?.result?.error?.message) {
+            $("#cp_error_reason").text(obj.result.error.message);
         }
+        $("#cp_error").show();
+        return;
+    }
+
+    if (obj.result.value.allowed) {
+        $('#cp_allowed').show();
+        $('#cp_policy').text(JSON.stringify(obj.result.value.policy, null, 2));
+    } else {
+        $('#cp_forbidden').show();
     }
 }
 
