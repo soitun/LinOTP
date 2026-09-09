@@ -43,13 +43,6 @@ ${_("Forwarding Token")}
  *
  */
 function forward_enroll_setup_defaults(config, options){
-    var rand_pin = options['otp_pin_random'];
-    if (rand_pin > 0) {
-        $("[name='set_pin_rows']").hide();
-    } else {
-        $("[name='set_pin_rows']").show();
-    }
-
 }
 
 /*
@@ -84,13 +77,13 @@ function forward_get_enroll_params(){
 	<td><input type="text" name="forward_serial" id="forward_serial" value="" class="text ui-widget-content ui-corner-all"></td>
 	</tr><tr>
 
-<tr name="set_pin_rows" class="space" title='${_("Protect your token with a static pin")}'><th colspan="2">${_("Token Pin:")}</th></tr>
-	<tr name="set_pin_rows">
+<tr class="space set_pin_rows" title='${_("Protect your token with a static pin")}'><th colspan="2">${_("Token Pin:")}</th></tr>
+	<tr class="set_pin_rows">
     <td class="description"><label for="forward_pin1" id="forward_pin1_label">${_("enter PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin1" id="forward_pin1"
             class="text ui-widget-content ui-corner-all"></td>
 	</tr>
-	<tr name="set_pin_rows">
+	<tr class="set_pin_rows">
     <td class="description"><label for="forward_pin2" id="forward_pin2_label">${_("confirm PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin2" id="forward_pin2"
             class="text ui-widget-content ui-corner-all"></td>

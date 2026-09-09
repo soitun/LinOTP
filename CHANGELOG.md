@@ -84,6 +84,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Selfservice login policies `mfa_login`, `autoassignment`, and `autoenrollment` are now evaluated with the authenticated user and realm, so realm-/user-scoped policies apply only within their scope; global policies are unaffected. As a result, `userservice/pre_context` no longer advertises these settings. This is a breaking change: make the policy global if it should apply to everyone.
 - The texts in demo license are updated.
 - API: resolver names no longer impose a minimum length, bringing them to parity with realm names (a name just needs to be non-empty and use letters, numbers, `_` or `-`). The Manage-UI still enforces a four-character minimum client-side.
+- Policies in the legacy `ocra` and `ocra2` scopes are no longer exempted from policy action validation. The ocra (v1) token type was removed in 3.0, and the ocra2 token type never used a policy scope `ocra2` at all. Saving such a policy now fails validation and it should be deleted instead.
 
 ### Security
 
@@ -110,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `userservice/webprovision` endpoint is removed
 - `userservice/getmultiotp` endpoint is removed
 - Legacy selfservice user interface removed
+- Unsupported smartcard leftovers are removed that never went into production: the `sopin` parameter of `/admin/setPin` and the `setSCPIN` admin policy. An existing policy that lists `setSCPIN` has no effect and should be cleaned up, as saving it again fails the policy action validation
 
 ### Deprecated
 

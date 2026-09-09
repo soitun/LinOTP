@@ -55,10 +55,6 @@
 
 function fido2_enroll_setup_defaults(config, options) {
   fido2_clear_input_fields();
-
-  // Hide/show PIN fields based on random PIN setting
-  const should_hide_pin_rows = options['otp_pin_random'] > 0;
-  $("[name='set_pin_rows']").toggle(!should_hide_pin_rows);
 }
 
 function fido2_get_enroll_params() {
@@ -369,10 +365,10 @@ const Base64URL = {
          value="webGUI_generated" class="text">
     </td>
   </tr>
-  <tr name="set_pin_rows" class="space" title='{$_("Protect your token with a static PIN")}'>
+  <tr class="space set_pin_rows" title='{$_("Protect your token with a static PIN")}'>
     <th colspan="2">${_("Token PIN:")}</th>
   </tr>
-  <tr name="set_pin_rows">
+  <tr class="set_pin_rows">
     <td class="description">
       <label for="fido2_pin1" id="fido2_pin1_label">
         ${_("Enter PIN")}:
@@ -383,7 +379,7 @@ const Base64URL = {
         class="text ui-widget-content ui-corner-all">
     </td>
   </tr>
-  <tr name="set_pin_rows">
+  <tr class="set_pin_rows">
     <td class="description">
       <label for="fido2_pin2" id="fido2_pin2_label">
         ${_("Confirm PIN")}:

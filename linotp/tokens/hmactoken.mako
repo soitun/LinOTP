@@ -56,12 +56,6 @@ function hmac_enroll_setup_defaults(config, options){
     $('#hmac_google_compliant').prop('checked', false);
     cb_changed_deactivate('hmac_key_rb_gen',['hmac_key']);
     google_constrains();
-    var rand_pin = options['otp_pin_random'];
-    if (rand_pin > 0) {
-        $("[name='set_pin_rows']").hide();
-    } else {
-        $("[name='set_pin_rows']").show();
-    }
 }
 
 /*
@@ -211,13 +205,13 @@ $('#hmac_google_compliant').click(function() {
                 value="web ui generated" class="text"></td>
 </tr>
 
-<tr name="set_pin_rows" class="space" title='${_("Protect your token with a static PIN")}'><th colspan="2">${_("Token PIN:")}</th></tr>
-<tr name="set_pin_rows">
+<tr class="space set_pin_rows" title='${_("Protect your token with a static PIN")}'><th colspan="2">${_("Token PIN:")}</th></tr>
+<tr class="set_pin_rows">
     <td class="description"><label for="pin1" id="hmac_pin1_label">${_("Enter PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin1" id="hmac_pin1"
             class="text ui-widget-content ui-corner-all"></td>
 </tr>
-<tr name="set_pin_rows">
+<tr class="set_pin_rows">
     <td class="description"><label for="pin2" id="hmac_pin2_label">${_("Confirm PIN")}:</label></td>
     <td><input type="password" autocomplete="off" name="pin2" id="hmac_pin2"
             class="text ui-widget-content ui-corner-all"></td>

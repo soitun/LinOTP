@@ -329,28 +329,12 @@ class OcraTest(TestController):
         self.create_common_realms()
         self.removeTokens()
         self.setupPolicies()
-        self.setupOcraPolicy()
 
     def tearDown(self):
         self.delete_all_policies()
         self.delete_all_realms()
         self.delete_all_resolvers()
         TestController.tearDown(self)
-
-    def setupOcraPolicy(self):
-        """
-        This sets up the ocra policy right
-        """
-        params = {
-            "name": "ocra_allowance",
-            "realm": "mydefrealm",
-            "user": "ocra_admin",
-            "scope": "ocra",
-            "action": "request, status, activationcode, calcOTP",
-        }
-        response = self.make_system_request("setPolicy", params=params)
-        assert '"setPolicy ocra_allowance"' in response, response
-        assert '"status": true' in response, response
 
     def setupPolicies(self, check_url="http://127.0.0.1/validate/check_t"):
         self.delete_all_policies()

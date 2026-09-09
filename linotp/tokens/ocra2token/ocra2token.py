@@ -24,7 +24,7 @@
 #    Support: www.linotp.de
 #
 
-"""This file containes the standard token definitions:
+"""This file contains the standard token definitions:
            - OCRA2TokenClass
 
 the OCRA2 Token will use the standard challenge response
@@ -55,11 +55,11 @@ instead of the dedicated ocra/request and ocra/check_t
 
  "sharedsecret": "25676ef34bd1873834bbe10c4c4176b0a9689619"
 
- which is the server data part for the pairing process transferd to the
+ which is the server data part for the pairing process transferred to the
  qrtan app.
 
  2. complete the rollout
- The qrtan app will calculate an activation code, that must be transfered
+ The qrtan app will calculate an activation code, that must be transferred
  back to the server as a set of input data for the second enrollment step by
  calling the /admin/init controller with the following parameters:
 
@@ -90,8 +90,8 @@ instead of the dedicated ocra/request and ocra/check_t
   :param challenge: the challenge input data as heart of the transaction
 
  a response to this request will then contain the /detail/ocraurl/img
- image data and the transaction id, which is the referer to the incomming
- challenge respones from the qrtan app.
+ image data and the transaction id, which is the referrer to the incoming
+ challenge responses from the qrtan app.
 
  The challenge response then is verified by /validate/check_t and the
  parameters:
@@ -189,11 +189,11 @@ def get_qrtan_url(qrtan_policy_name, realms, callback_id=None):
     """
     urls = []
 
-    # Policies defintions with wildcard defintions '*'
+    # Policy definitions with wildcard definitions '*'
     # if there is no realm defined, we can catch by this trick the
     # policy definition, which have an realm wildcard definition '*'
     # so that the wildcard will match as well the empty realm
-    # By setting the realm to '/:no realm:/' there is no collission with
+    # By setting the realm to '/:no realm:/' there is no collisions with
     # any realm as this string contains characters, which are not allowed in
     # realm names
     if realms is None or len(realms) == 0:

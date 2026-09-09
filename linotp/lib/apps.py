@@ -192,21 +192,3 @@ def authenticator_url(label, param):
     log.debug("authenticator url: %r", auth_url[:auth_url_prefix_len])
 
     return auth_url
-
-
-def create_oathtoken_url(user, realm, otpkey, type="hmac", serial=""):
-    # 'url' : 'oathtoken:///addToken?name='+serial +
-    #                '&key='+otpkey+
-    #                '&timeBased=false&counter=0&numDigites=6&lockdown=true',
-
-    timebased = ""
-    if type.lower() == "totp":
-        timebased = "&timeBased=true"
-
-    label = get_tokenlabel(user, realm, serial)
-    url_label = quote(label)
-
-    url = (
-        f"oathtoken:///addToken?name={url_label}&lockdown=true&key={otpkey}{timebased}"
-    )
-    return url

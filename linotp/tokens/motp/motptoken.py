@@ -23,7 +23,7 @@
 #    Contact: www.linotp.org
 #    Support: www.linotp.de
 #
-"""This file containes the mOTP token implementation:
+"""This file contains the mOTP token implementation:
 - http://motp.sourceforge.net/ -
 """
 

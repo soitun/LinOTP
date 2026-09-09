@@ -23,7 +23,7 @@
 #    Contact: www.linotp.org
 #    Support: www.linotp.de
 #
-"""This file containes the RADIUS token class"""
+"""This file contains the RADIUS token class"""
 
 import binascii
 import logging

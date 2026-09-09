@@ -149,12 +149,6 @@ ${_("QRToken - challenge/response Token")}
  */
 function qr_enroll_setup_defaults(config, options){
     qr_clear_input_fields();
-
-    if (options['otp_pin_random'] > 0) {
-        $(".qrtoken_pin_rows").hide();
-    } else {
-        $(".qrtoken_pin_rows").show();
-    }
 }
 
 /*
@@ -206,12 +200,12 @@ function qr_clear_input_fields() {
             </select>
         </td>
     </tr>
-    <tr class="space qrtoken_pin_rows">
+    <tr class="space set_pin_rows">
         <th colspan="2">
             ${_("Token PIN:")}
         </th>
     </tr>
-    <tr class="qrtoken_pin_rows">
+    <tr class="set_pin_rows">
         <td class="description">
             <label for="pin1">${_("Enter PIN")}:</label>
         </td>
@@ -219,7 +213,7 @@ function qr_clear_input_fields() {
             <input type="password" autocomplete="off" name="pin1" id="qrtoken_pin1" class="text">
         </td>
     </tr>
-    <tr class="qrtoken_pin_rows">
+    <tr class="set_pin_rows">
         <td class="description">
             <label for="pin2">${_("Confirm PIN")}:</label>
         </td>

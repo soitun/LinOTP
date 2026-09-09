@@ -23,7 +23,7 @@
 #    Contact: www.linotp.org
 #    Support: www.linotp.de
 #
-"""This file containes the dynamic time based hmac token implementation"""
+"""This file contains the dynamic time based hmac token implementation"""
 
 import datetime
 import logging
