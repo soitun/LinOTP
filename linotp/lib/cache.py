@@ -18,7 +18,9 @@ def get_cache(cache_name: str, scope: str | None = None) -> Cache | None:
         linotp.{cache_name}_cache.enabled
             Whether the cache is enabled. Defaults to True
         linotp.{cache_name}_cache.expiration
-            How long the entries are cached for in seconds. Defaults to 3 days.
+            How long the entries are cached. Either a number of seconds or a
+            duration like '36h', '1d 12h' or the iso8601 form 'P1DT12H'.
+            Defaults to 36 hours.
 
     :remark: This cache is only enabled, if the configuration entry 'enabled'
              evaluates to True and the expiration is of a valid format.
